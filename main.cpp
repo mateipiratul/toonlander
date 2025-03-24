@@ -7,31 +7,24 @@
 #include <Helper.h>
 
 class Projectile {
-    sf::RectangleShape shape;
-    float speed; // make const (generator must be fixed)
+    sf::RectangleShape shape; // will be replaced with an actual sprite
+    float speed;
+    int direction; // either 1 for right of -1 for left
 
 public:
-    Projectile(float x, float y) : speed(10.0f) {
-        shape.setSize({15.0f, 5.0f});
+    Projectile(float x, float y, int dir) : speed(13.0f), direction(dir) {
+        shape.setSize({17.0f, 10.0f}); // size of bullet
         shape.setFillColor(sf::Color::Red);
-        shape.setPosition(x, y);
+        shape.setPosition(x, y); // initial position of the bullet
     }
 
-    void update() {
-        shape.move(speed, 0);
-    }
+    void update() { shape.move(speed * direction, 0); } // linear movement
 
-    void draw(sf::RenderWindow& win) const {
-        win.draw(shape);
-    }
+    void draw(sf::RenderWindow& win) const { win.draw(shape); }
 
-    sf::FloatRect getBounds() const {
-        return shape.getGlobalBounds();
-    }
+    sf::FloatRect getBounds() const { return shape.getGlobalBounds(); }
 
-    bool isOffScreen(int screenWidth) const {
-        return shape.getPosition().x > screenWidth;
-    }
+    bool isOffScreen(int screenWidth) const { return shape.getPosition().x > screenWidth; }
 };
 
 class Platform {
@@ -44,22 +37,19 @@ public:
         shape.setPosition(x, y);
     }
 
-    void draw(sf::RenderWindow& win) const {
-        win.draw(shape);
-    }
+    void draw(sf::RenderWindow& win) const { win.draw(shape); }
 
-    sf::FloatRect getBounds() const {
-        return shape.getGlobalBounds();
-    }
+    sf::FloatRect getBounds() const { return shape.getGlobalBounds(); }
 };
 
 class Player {
     sf::RectangleShape shape;
-    float speed; // movement speed
+    const float speed = 4.0f; // movement speed
     sf::Vector2f velocity;
     bool isJumping; // jumping state
     bool canJump; // jump only once per key press
     bool isDropping; // platform drop-down state
+    bool facingRight;
     const float gravity = 0.5f;
     const float jumpForce = -15.0f;
     const float groundY = 850.0f;
@@ -69,19 +59,27 @@ class Player {
     int shootCooldown;
 
 public:
-    explicit Player(sf::RenderWindow* win) : speed(5.0f), velocity(0.0f, 0.0f), isJumping(false), canJump(true), isDropping(false), window(win)  {
+    Player(sf::RenderWindow* win) :
+    velocity(0.0f, 0.0f), isJumping(false),
+    canJump(true), isDropping(false), facingRight(true),
+    window(win), shootCooldown(10) {
         shape.setSize({40.0f, 50.0f});
         shape.setFillColor(sf::Color::Green);
         shape.setPosition(400, groundY);
     }
 
     void handleInput() {
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left) && shape.getPosition().x > 0)
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left) && shape.getPosition().x > 0) {
             velocity.x = -speed;
-        else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right) && shape.getPosition().x + shape.getSize().x < window->getSize().x)
+            facingRight = false;
+        }
+        else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right) && shape.getPosition().x + shape.getSize().x < window->getSize().x) {
             velocity.x = speed;
-        else
+            facingRight = true;
+        }
+        else {
             velocity.x = 0;
+        }
 
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Z) && !isJumping && canJump && !sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) {
             isJumping = true;
@@ -98,7 +96,9 @@ public:
         }
 
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::X) && shootCooldown <= 0) {
-            bullets.emplace_back(shape.getPosition().x + shape.getSize().x, shape.getPosition().y + shape.getSize().y / 2);
+            int bulletDirection = facingRight ? 1 : -1;
+            float bulletX = facingRight ? shape.getPosition().x + shape.getSize().x + 5 : shape.getPosition().x - 20;
+            bullets.emplace_back(bulletX, shape.getPosition().y + shape.getSize().y / 2 - 5, bulletDirection);
             shootCooldown = 10;
         }
     }
@@ -140,17 +140,13 @@ public:
                 }
             }
 
-            if (shape.getPosition().y > platformBounds.top + platformBounds.height) {
-                isDropping = false;
-            }
+            if (shape.getPosition().y > platformBounds.top + platformBounds.height) { isDropping = false; }
         }
     }
 
     void draw(sf::RenderWindow& win) const {
         win.draw(shape);
-        for (auto& bullet : bullets) {
-            bullet.draw(win);
-        }
+        for (auto& bullet : bullets) { bullet.draw(win); }
     }
 };
 
@@ -160,10 +156,11 @@ int main() {
     helper.help();
 
     sf::RenderWindow window;
-    window.create(sf::VideoMode({1600, 900}), "Toonlander", sf::Style::Default);
-    /// window.setVerticalSyncEnabled(true);
+    window.create(sf::VideoMode({1600, 900}), "ToonLander", sf::Style::Default);
+    /// window.setVerticalSyncEnabled(true); /// varianta alternativa
     window.setFramerateLimit(120);
     Player player(&window);
+    bool isPaused = false; // initial, unpaused state
 
     std::vector<Platform> platforms = {
         {600, 700, 300, 20},
@@ -176,10 +173,15 @@ int main() {
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed)
                 window.close();
+
+            if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::P)
+                isPaused = !isPaused;
         }
 
-        player.handleInput();
-        player.updatePhysics(platforms); // aplicarea gravitatiei
+        if (!isPaused) {
+            player.handleInput();
+            player.updatePhysics(platforms); // apply gravity
+        }
 
         window.clear();
         for (auto& platform : platforms) {
@@ -191,4 +193,3 @@ int main() {
 
     return 0;
 }
-// let's implement a small feature, now that we have this code: a pause button (upon pressing the 'P' key, everything freezes)

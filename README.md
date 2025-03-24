@@ -1,35 +1,73 @@
 # ToonLander 
 
-### 2D platformer shooter by Cocu Matei-Iulian
+### 2D platformer shooter made in C++ using SFML Library *(by Cocu Matei-Iulian)*
 
 | Laborant  | Link template                                |
 |-----------|----------------------------------------------|
 | Tiberiu M | https://github.com/MaximTiberiu/oop-template |
 
-### Important!
+## Implemented Classes
 
-Aveți voie cu cod generat de modele de limbaj la care nu ați contribuit semnificativ doar în folder-ul `generated`.
-Codul generat pus "ca să fie"/pe care nu îl înțelegeți se punctează doar pentru puncte bonus, doar în contextul
-în care oferă funcționalități ajutătoare și doar dacă are sens.
+### **`Platform`** (static platforms for Player to stand on)
+- **Stores** size and position (`sf::RectangleShape`)
+- **`getBounds()`** → returns platform's hitbox
+- **`draw(sf::RenderWindow&)`** → renders platform
 
-### Tema 0
+### **`Projectile`** (bullets fired by Player)
+- **Stores** size, position, and movement speed
+- Moves in a straight line (`update()`)
+- Tracks direction (`1` = right, `-1` = left)
+- **`isOffScreen()`** → checks if bullet should be deleted
+- **`draw(sf::RenderWindow&)`** → renders the bullet
 
-- [ ] Nume proiect (poate fi schimbat ulterior)
-- [ ] Scurtă descriere a temei alese, ce v-ați propus să implementați
+### **`Player`** (core gameplay mechanics)
+- **Handles movement** (`Left` & `Right`).
+- **Handles jumping** (`Z` key, one time jump).
+- **Supports platform dropping** (`Down + Z`).
+- **Tracks direction** (`facingRight`, for correct bullet generation).
+- **Handles shooting** (`X` key, flurry of bullets).
+- **Stores active bullets** in `std::vector<Projectile> bullets`.
+- **Processes physics** (gravity, platform collision, bullet updates).
+- **`draw(sf::RenderWindow&)`** → Renders player and bullets.
+
+---
+
+## Key Functionalities
+
+### **Movement & Jumping**
+- Player moves **left/right** with arrow keys
+- Can jump **once every key stroke**
+- Falls due to **gravity** when in air
+
+### **Shooting**
+- Press **`X`** to fire **bullets continuously**
+- Bullets shoot **in the direction Player is facing**
+- Bullets **despawn when off-screen**
+
+### **Platform Collision**
+- Player **lands on platforms** when falling
+- Player **can pass through platforms**
+- **Dropping mechanic:** Press **`Down + Z`** to fall through a platform
+
+### **Pause Feature**
+- Press **`P`** to freeze **Player, Bullets, and Physics updates**
+- Press **`P`** again to resume
+
+---
 
 ## Tema 1
 
 #### Cerințe
-- [ ] definirea a minim **3-4 clase** folosind compunere cu clasele definite de voi; moștenirile nu se iau în considerare aici
-- [ ] constructori de inițializare cu parametri pentru fiecare clasă
+- [x] definirea a minim **3-4 clase** folosind compunere cu clasele definite de voi; moștenirile nu se iau în considerare aici
+- [x] constructori de inițializare cu parametri pentru fiecare clasă
 - [ ] pentru o aceeași (singură) clasă: constructor de copiere, `operator=` de copiere, destructor
 <!-- - [ ] pentru o altă clasă: constructor de mutare, `operator=` de mutare, destructor -->
 <!-- - [ ] pentru o altă clasă: toate cele 5 funcții membru speciale -->
-- [ ] `operator<<` pentru **toate** clasele pentru afișare (`std::ostream`) folosind compunere de apeluri cu `operator<<`
-- [ ] cât mai multe `const` (unde este cazul) și funcții `private`
-- [ ] implementarea a minim 3 funcții membru publice pentru funcționalități netriviale specifice temei alese, dintre care cel puțin 1-2 funcții mai complexe
+- [x] `operator<<` pentru **toate** clasele pentru afișare (`std::ostream`) folosind compunere de apeluri cu `operator<<`
+- [x] cât mai multe `const` (unde este cazul) și funcții `private`
+- [x] implementarea a minim 3 funcții membru publice pentru funcționalități netriviale specifice temei alese, dintre care cel puțin 1-2 funcții mai complexe
   - nu doar citiri/afișări sau adăugat/șters elemente într-un/dintr-un vector
-- [ ] scenariu de utilizare **cu sens** a claselor definite:
+- [x] scenariu de utilizare **cu sens** a claselor definite:
   - crearea de obiecte și apelarea tuturor funcțiilor membru publice în main
   - vor fi adăugate în fișierul `tastatura.txt` DOAR exemple de date de intrare de la tastatură (dacă există); dacă aveți nevoie de date din fișiere, creați alte fișiere separat
 - [ ] minim 50-55% din codul propriu să fie C++, `.gitattributes` configurat corect
