@@ -59,7 +59,7 @@ class Player {
     int shootCooldown;
 
 public:
-    Player(sf::RenderWindow* win) :
+    explicit Player(sf::RenderWindow* win) :
     velocity(0.0f, 0.0f), isJumping(false),
     canJump(true), isDropping(false), facingRight(true),
     window(win), shootCooldown(10) {
@@ -146,7 +146,7 @@ public:
 
     void draw(sf::RenderWindow& win) const {
         win.draw(shape);
-        for (auto& bullet : bullets) { bullet.draw(win); }
+        for (const auto& bullet : bullets) { bullet.draw(win); }
     }
 };
 
@@ -184,7 +184,7 @@ int main() {
         }
 
         window.clear();
-        for (auto& platform : platforms) {
+        for (const auto& platform : platforms) {
             platform.draw(window);
         }
         player.draw(window);
