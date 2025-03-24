@@ -1,124 +1,194 @@
 #include <iostream>
-#include <array>
+#include <vector>
 #include <chrono>
-#include <thread>
 
 #include <SFML/Graphics.hpp>
 
 #include <Helper.h>
 
-//////////////////////////////////////////////////////////////////////
-/// This class is used to test that the memory leak checks work as expected even when using a GUI
-class SomeClass {
+class Projectile {
+    sf::RectangleShape shape;
+    float speed; // make const (generator must be fixed)
+
 public:
-    explicit SomeClass(int) {}
+    Projectile(float x, float y) : speed(10.0f) {
+        shape.setSize({15.0f, 5.0f});
+        shape.setFillColor(sf::Color::Red);
+        shape.setPosition(x, y);
+    }
+
+    void update() {
+        shape.move(speed, 0);
+    }
+
+    void draw(sf::RenderWindow& win) const {
+        win.draw(shape);
+    }
+
+    sf::FloatRect getBounds() const {
+        return shape.getGlobalBounds();
+    }
+
+    bool isOffScreen(int screenWidth) const {
+        return shape.getPosition().x > screenWidth;
+    }
 };
 
-SomeClass *getC() {
-    return new SomeClass{2};
-}
-//////////////////////////////////////////////////////////////////////
+class Platform {
+    sf::RectangleShape shape;
 
-
-int main() {
-    ///
-    std::cout << "Hello, world!\n";
-    std::array<int, 100> v{};
-    int nr;
-    std::cout << "Introduceți nr: ";
-    /////////////////////////////////////////////////////////////////////////
-    /// Observație: dacă aveți nevoie să citiți date de intrare de la tastatură,
-    /// dați exemple de date de intrare folosind fișierul tastatura.txt
-    /// Trebuie să aveți în fișierul tastatura.txt suficiente date de intrare
-    /// (în formatul impus de voi) astfel încât execuția programului să se încheie.
-    /// De asemenea, trebuie să adăugați în acest fișier date de intrare
-    /// pentru cât mai multe ramuri de execuție.
-    /// Dorim să facem acest lucru pentru a automatiza testarea codului, fără să
-    /// mai pierdem timp de fiecare dată să introducem de la zero aceleași date de intrare.
-    ///
-    /// Pe GitHub Actions (bife), fișierul tastatura.txt este folosit
-    /// pentru a simula date introduse de la tastatură.
-    /// Bifele verifică dacă programul are erori de compilare, erori de memorie și memory leaks.
-    ///
-    /// Dacă nu puneți în tastatura.txt suficiente date de intrare, îmi rezerv dreptul să vă
-    /// testez codul cu ce date de intrare am chef și să nu pun notă dacă găsesc vreun bug.
-    /// Impun această cerință ca să învățați să faceți un demo și să arătați părțile din
-    /// program care merg (și să le evitați pe cele care nu merg).
-    ///
-    /////////////////////////////////////////////////////////////////////////
-    std::cin >> nr;
-    /////////////////////////////////////////////////////////////////////////
-    for(int i = 0; i < nr; ++i) {
-        std::cout << "v[" << i << "] = ";
-        std::cin >> v[i];
+public:
+    Platform(float x, float y, float width, float height) {
+        shape.setSize({width, height});
+        shape.setFillColor(sf::Color::Blue);
+        shape.setPosition(x, y);
     }
-    std::cout << "\n\n";
-    std::cout << "Am citit de la tastatură " << nr << " elemente:\n";
-    for(int i = 0; i < nr; ++i) {
-        std::cout << "- " << v[i] << "\n";
+
+    void draw(sf::RenderWindow& win) const {
+        win.draw(shape);
     }
-    ///////////////////////////////////////////////////////////////////////////
-    /// Pentru date citite din fișier, NU folosiți tastatura.txt. Creați-vă voi
-    /// alt fișier propriu cu ce alt nume doriți.
-    /// Exemplu:
-    /// std::ifstream fis("date.txt");
-    /// for(int i = 0; i < nr2; ++i)
-    ///     fis >> v2[i];
-    ///
-    ///////////////////////////////////////////////////////////////////////////
-    ///                Exemplu de utilizare cod generat                     ///
-    ///////////////////////////////////////////////////////////////////////////
-    Helper helper;
-    helper.help();
-    ///////////////////////////////////////////////////////////////////////////
 
-    SomeClass *c = getC();
-    std::cout << c << "\n";
-    delete c;  // comentarea acestui rând ar trebui să ducă la semnalarea unui mem leak
+    sf::FloatRect getBounds() const {
+        return shape.getGlobalBounds();
+    }
+};
 
-    sf::RenderWindow window;
-    ///////////////////////////////////////////////////////////////////////////
-    /// NOTE: sync with env variable APP_WINDOW from .github/workflows/cmake.yml:31
-    window.create(sf::VideoMode({800, 700}), "My Window", sf::Style::Default);
-    ///////////////////////////////////////////////////////////////////////////
-    //
-    ///////////////////////////////////////////////////////////////////////////
-    /// NOTE: mandatory use one of vsync or FPS limit (not both)            ///
-    /// This is needed so we do not burn the GPU                            ///
-    window.setVerticalSyncEnabled(true);                                    ///
-    /// window.setFramerateLimit(60);                                       ///
-    ///////////////////////////////////////////////////////////////////////////
+class Player {
+    sf::RectangleShape shape;
+    float speed; // movement speed
+    sf::Vector2f velocity;
+    bool isJumping; // jumping state
+    bool canJump; // jump only once per key press
+    bool isDropping; // platform drop-down state
+    const float gravity = 0.5f;
+    const float jumpForce = -15.0f;
+    const float groundY = 850.0f;
+    sf::RenderWindow* window;
 
-    while(window.isOpen()) {
-        bool shouldExit = false;
-        sf::Event e{};
-        while(window.pollEvent(e)) {
-            switch(e.type) {
-            case sf::Event::Closed:
-                window.close();
-                break;
-            case sf::Event::Resized:
-                std::cout << "New width: " << window.getSize().x << '\n'
-                          << "New height: " << window.getSize().y << '\n';
-                break;
-            case sf::Event::KeyPressed:
-                std::cout << "Received key " << (e.key.code == sf::Keyboard::X ? "X" : "(other)") << "\n";
-                if(e.key.code == sf::Keyboard::Escape)
-                    shouldExit = true;
-                break;
-            default:
-                break;
+    std::vector<Projectile> bullets;
+    int shootCooldown;
+
+public:
+    explicit Player(sf::RenderWindow* win) : speed(5.0f), velocity(0.0f, 0.0f), isJumping(false), canJump(true), isDropping(false), window(win)  {
+        shape.setSize({40.0f, 50.0f});
+        shape.setFillColor(sf::Color::Green);
+        shape.setPosition(400, groundY);
+    }
+
+    void handleInput() {
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left) && shape.getPosition().x > 0)
+            velocity.x = -speed;
+        else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right) && shape.getPosition().x + shape.getSize().x < window->getSize().x)
+            velocity.x = speed;
+        else
+            velocity.x = 0;
+
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Z) && !isJumping && canJump && !sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) {
+            isJumping = true;
+            velocity.y = jumpForce;
+            canJump = false;
+        }
+
+        if (!sf::Keyboard::isKeyPressed(sf::Keyboard::Z)) {
+            canJump = true;
+        }
+
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down) && sf::Keyboard::isKeyPressed(sf::Keyboard::Z) && !isJumping) {
+            isDropping = true;
+        }
+
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::X) && shootCooldown <= 0) {
+            bullets.emplace_back(shape.getPosition().x + shape.getSize().x, shape.getPosition().y + shape.getSize().y / 2);
+            shootCooldown = 10;
+        }
+    }
+
+    void updatePhysics(const std::vector<Platform>& platforms) {
+        velocity.y += gravity;
+        shape.move(velocity);
+
+        if (shape.getPosition().y >= groundY) {
+            isJumping = false;
+            isDropping = false;
+            shape.setPosition(shape.getPosition().x, groundY);
+            velocity.y = 0.0f;
+        }
+
+        if (shootCooldown > 0) {
+            shootCooldown--;
+        }
+
+        for (auto bull = bullets.begin(); bull != bullets.end();) {
+            bull->update();
+            if (bull->isOffScreen(window->getSize().x)) {
+                bull = bullets.erase(bull);
+            }
+            else {
+                ++bull;
             }
         }
-        if(shouldExit) {
-            window.close();
-            break;
+
+        for (const auto& platform : platforms) {
+            sf::FloatRect platformBounds = platform.getBounds();
+            sf::FloatRect playerBounds = shape.getGlobalBounds();
+
+            if (playerBounds.intersects(platformBounds) && velocity.y > 0) {
+                if (!isDropping) {
+                    isJumping = false;
+                    shape.setPosition(shape.getPosition().x, platformBounds.top - playerBounds.height);
+                    velocity.y = 0.0f;
+                }
+            }
+
+            if (shape.getPosition().y > platformBounds.top + platformBounds.height) {
+                isDropping = false;
+            }
         }
-        using namespace std::chrono_literals;
-        std::this_thread::sleep_for(300ms);
+    }
+
+    void draw(sf::RenderWindow& win) const {
+        win.draw(shape);
+        for (auto& bullet : bullets) {
+            bullet.draw(win);
+        }
+    }
+};
+
+int main() {
+    std::cout << "mesaj initial\n";
+    Helper helper;
+    helper.help();
+
+    sf::RenderWindow window;
+    window.create(sf::VideoMode({1600, 900}), "Toonlander", sf::Style::Default);
+    /// window.setVerticalSyncEnabled(true);
+    window.setFramerateLimit(120);
+    Player player(&window);
+
+    std::vector<Platform> platforms = {
+        {600, 700, 300, 20},
+        {700, 500, 400, 20},
+        {300, 350, 250, 20}
+    };
+
+    while (window.isOpen()) {
+        sf::Event event;
+        while (window.pollEvent(event)) {
+            if (event.type == sf::Event::Closed)
+                window.close();
+        }
+
+        player.handleInput();
+        player.updatePhysics(platforms); // aplicarea gravitatiei
 
         window.clear();
+        for (auto& platform : platforms) {
+            platform.draw(window);
+        }
+        player.draw(window);
         window.display();
     }
+
     return 0;
 }
+// let's implement a small feature, now that we have this code: a pause button (upon pressing the 'P' key, everything freezes)
