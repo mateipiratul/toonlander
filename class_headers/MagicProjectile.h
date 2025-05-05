@@ -44,10 +44,10 @@ public:
         }
     }
 
-    void update(float dt) override {
+    void update() override {
         sprite.move(velocity);
         checkOffScreen();
-        Entity::update(dt);
+        Entity::update();
     }
 
     void draw() override { if (window && sprite.getTexture() != nullptr) { window->draw(this->sprite); } }

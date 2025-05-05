@@ -173,8 +173,6 @@ public:
           currentCenterY(startPos.y),
           rng(std::chrono::steady_clock::now().time_since_epoch().count())
     {
-        if (!win) { throw ConfigurationError("MageOrc requires a valid RenderWindow pointer."); }
-
         this->frameWidth = 96;
         this->frameHeight = 96;
         this->healthPoints = 300;
@@ -218,10 +216,10 @@ public:
 
     void actions() override {}
 
-    void update(float dt) override {
+    void update(float dt) {
         if (!isAlive) {
             if (currentAnimationName == "death") {
-                Entity::update(dt);
+                Entity::update();
                 if (animationClock.getElapsedTime().asSeconds() >= currentAnimationInterval * currentNumFrames) {
                     markedForRemoval = true;
                 }
@@ -263,7 +261,7 @@ public:
             chooseNextState();
         }
 
-        Entity::update(dt);
+        Entity::update();
     }
 
     void draw() override {

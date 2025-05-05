@@ -36,10 +36,10 @@ public:
     void actions() override {}
     void takeDamage() override {}
 
-    void update(float dt) override {
+    void update() override {
         sprite.move(velocity);
         checkOffScreen();
-        Entity::update(dt);
+        Entity::update();
     }
 
     void draw() override {

@@ -108,7 +108,7 @@ public:
 
     void actions() override {}
 
-    void update(float dt) override {
+    void update() override {
         bool boundaryReached = false;
 
         if (currentState == State::WALKING) {
@@ -116,7 +116,7 @@ public:
             float leftBoundary = originPoint.x - patrolRange;
             float rightBoundary = originPoint.x + patrolRange;
 
-            float nextX = currentX + velocity.x * dt;
+            float nextX = currentX + velocity.x;
 
             if (isMovingRight && nextX >= rightBoundary) {
                 setPosition(rightBoundary, getPosition().y);
@@ -139,7 +139,7 @@ public:
             chooseNextState();
         }
 
-        Entity::update(dt);
+        Entity::update();
     }
 
     void draw() override {

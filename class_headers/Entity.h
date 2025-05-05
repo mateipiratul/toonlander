@@ -58,7 +58,7 @@ public:
     virtual void actions() = 0;
     virtual void takeDamage() = 0;
 
-    virtual void update(float dt) {
+    virtual void update() {
         if (currentAnimationInterval > 0 && currentNumFrames > 1 && !currentAnimationName.empty() && animationTextures.count(currentAnimationName)) {
             if (animationClock.getElapsedTime().asSeconds() >= currentAnimationInterval) {
                 currentFrameIndex = (currentFrameIndex + 1) % currentNumFrames;
@@ -109,9 +109,9 @@ public:
         return sprite.getGlobalBounds();
     }
 
-    const sf::Sprite& getSprite() const {
-        return sprite;
-    }
+    // const sf::Sprite& getSprite() const {
+    //     return sprite;
+    // }
 
     sf::Vector2f getPosition() const {
         return sprite.getPosition();

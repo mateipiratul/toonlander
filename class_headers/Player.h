@@ -109,86 +109,87 @@ public:
         }
     }
 
-void actions() override {
-    wantsToShoot = false;
-    bool tryingToShoot = sf::Keyboard::isKeyPressed(sf::Keyboard::X);
+    void actions() override {
+        wantsToShoot = false;
+        bool tryingToShoot = sf::Keyboard::isKeyPressed(sf::Keyboard::X);
 
-        if (tryingToShoot && currentShootCooldown <= 0 && onGround && velocity.x == 0 && !isJumping && !isShooting) {
-            wantsToShoot = true;
-            setAnimation("shoot", 4, 0.09f);
-            sprite.setOrigin(frameWidth / 2.0f, frameHeight / 2.0f);
-            isShooting = true;
-            currentShootCooldown = shootCooldownTime;
-        }
-
-    if (currentShootCooldown > 0) {
-        currentShootCooldown--;
-    }
-
-    if (!isShooting) {
-        bool movingLeft = sf::Keyboard::isKeyPressed(sf::Keyboard::Left);
-        bool movingRight = sf::Keyboard::isKeyPressed(sf::Keyboard::Right);
-
-        if (movingLeft && getPosition().x > getHitboxGlobalBounds().width / 2.0f) {
-            velocity.x = -speed;
-            facingRight = false;
-            sprite.setScale(-std::abs(currentScaleX), currentScaleY);
-
-            if (onGround && !isJumping) {
-                setAnimation("run", 10, 0.05f);
+            if (tryingToShoot && currentShootCooldown <= 0 && onGround && velocity.x == 0 && !isJumping && !isShooting) {
+                wantsToShoot = true;
+                setAnimation("shoot", 4, 0.09f);
+                sprite.setOrigin(frameWidth / 2.0f, frameHeight / 2.0f);
+                isShooting = true;
+                currentShootCooldown = shootCooldownTime;
             }
-        } else if (movingRight && getPosition().x < window->getSize().x - getHitboxGlobalBounds().width / 2.0f) {
-            velocity.x = speed;
-            facingRight = true;
-            sprite.setScale(std::abs(currentScaleX), currentScaleY);
 
-            if (onGround && !isJumping) {
-                setAnimation("run", 10, 0.05f);
+        if (currentShootCooldown > 0) {
+            currentShootCooldown--;
+        }
+
+        if (!isShooting) {
+            bool movingLeft = sf::Keyboard::isKeyPressed(sf::Keyboard::Left);
+            bool movingRight = sf::Keyboard::isKeyPressed(sf::Keyboard::Right);
+
+            if (movingLeft && getPosition().x > getHitboxGlobalBounds().width / 2.0f) {
+                velocity.x = -speed;
+                facingRight = false;
+                sprite.setScale(-std::abs(currentScaleX), currentScaleY);
+
+                if (onGround && !isJumping) {
+                    setAnimation("run", 10, 0.05f);
+                }
+            } else if (movingRight && getPosition().x < window->getSize().x - getHitboxGlobalBounds().width / 2.0f) {
+                velocity.x = speed;
+                facingRight = true;
+                sprite.setScale(std::abs(currentScaleX), currentScaleY);
+
+                if (onGround && !isJumping) {
+                    setAnimation("run", 10, 0.05f);
+                }
+            } else {
+                velocity.x = 0;
+                if (onGround && !isJumping) {
+                    setAnimation("idle", 6, 0.1f);
+                }
             }
-        } else {
-            velocity.x = 0;
-            if (onGround && !isJumping) {
-                setAnimation("idle", 6, 0.1f);
+
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Z)) {
+                if (canJump && onGround) {
+                    jump();
+                }
+            } else {
+                canJump = true;
+            }
+
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::C) && onGround && !isJumping) {
+                isDropping = true;
+                onGround = false;
+                velocity.y = dropThroughVelocity;
             }
         }
-
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Z)) {
-            if (canJump && onGround) {
-                jump();
-            }
-        } else {
-            canJump = true;
-        }
-
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::C) && onGround && !isJumping) {
-            isDropping = true;
-            onGround = false;
-            velocity.y = dropThroughVelocity;
-        }
-    }
-}
-    void startMovingLeft() {
-        if (!isJumping && !isShooting) {
-            setAnimation("run", 10, 0.05f);
-            velocity.x = -speed;
-            facingRight = false;
-            sprite.setScale(-std::abs(currentScaleX), currentScaleY); // Use abs for safety
-        }
     }
 
-    void startMovingRight() {
-        if (!isJumping && !isShooting) {
-            setAnimation("run", 10, 0.05f);
-            velocity.x = speed;
-            facingRight = true;
-            sprite.setScale(std::abs(currentScaleX), currentScaleY);
-        }
-    }
+    // void startMovingLeft() {
+    //     if (!isJumping && !isShooting) {
+    //         setAnimation("run", 10, 0.05f);
+    //         velocity.x = -speed;
+    //         facingRight = false;
+    //         sprite.setScale(-std::abs(currentScaleX), currentScaleY); // Use abs for safety
+    //     }
+    // }
 
-    void stopMoving() {
-        if (!isJumping && velocity.x != 0 && !isShooting) { setAnimation("idle", 6, 0.1f); }
-        if (!isShooting) { velocity.x = 0; }
-    }
+    // void startMovingRight() {
+    //     if (!isJumping && !isShooting) {
+    //         setAnimation("run", 10, 0.05f);
+    //         velocity.x = speed;
+    //         facingRight = true;
+    //         sprite.setScale(std::abs(currentScaleX), currentScaleY);
+    //     }
+    // }
+
+    // void stopMoving() {
+    //     if (!isJumping && velocity.x != 0 && !isShooting) { setAnimation("idle", 6, 0.1f); }
+    //     if (!isShooting) { velocity.x = 0; }
+    // }
 
     void jump() {
         if (onGround && !isShooting) {
@@ -260,7 +261,7 @@ void actions() override {
             }
         }
 
-        Entity::update(dt);
+        Entity::update();
     }
 
     bool wantsToShootProjectile() const { return wantsToShoot; }

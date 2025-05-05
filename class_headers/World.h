@@ -94,7 +94,7 @@ class World {
         if (!playerPtr) { throw GameLogicError("Player pointer is null during collision check."); }
 
         sf::FloatRect playerHitbox = playerPtr->getCollisionBounds();
-        std::vector<Entity*> projectilesToRemove;
+        // std::vector<Entity*> projectilesToRemove;
 
         for (const auto& entity : entities) {
             if (!entity || entity.get() == playerPtr) continue;
@@ -209,7 +209,7 @@ public:
         std::cout << "World initialized successfully." << std::endl;
     }
 
-    void handleInput(const sf::Event& event) {
+    void handleInput() {
         if (playerPtr) {}
     }
 
@@ -238,9 +238,9 @@ public:
                   mage->updatePlayerPosition(&currentPlayerPos);
                   mage->update(dt);
              } else if (BerserkOrc* orc = dynamic_cast<BerserkOrc*>(entity.get())) {
-                  orc->update(dt);
+                  orc->update();
              }
-              else { entity->update(dt); }
+              else { entity->update(); }
         }
 
         spawnRequestedProjectiles();

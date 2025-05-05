@@ -20,7 +20,7 @@ class Menu {
     bool startRequested = false;
     bool isHovering = false;
 
-    void centerOrigin(sf::Text& text) {
+    static void centerOrigin(sf::Text& text) {
         sf::FloatRect bounds = text.getLocalBounds();
         text.setOrigin(bounds.left + bounds.width / 2.0f, bounds.top + bounds.height / 2.0f);
     }
@@ -133,12 +133,12 @@ public:
         return startRequested;
     }
 
-    void reset() {
-        startRequested = false;
-        isHovering = false;
-        buttonBox.setFillColor(sf::Color::White);
-        startButtonText.setFillColor(sf::Color::Black);
-    }
+    // void reset() {
+    //     startRequested = false;
+    //     isHovering = false;
+    //     buttonBox.setFillColor(sf::Color::White);
+    //     startButtonText.setFillColor(sf::Color::Black);
+    // }
 };
 
 #endif // MENU_H
