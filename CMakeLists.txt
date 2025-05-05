@@ -59,6 +59,11 @@ endif()
 add_executable(${MAIN_EXECUTABLE_NAME}
     main.cpp
     generated/src/Helper.cpp
+        class_headers/Platform.h
+        class_headers/Projectile.h
+        class_headers/Menu.h
+        class_headers/MageOrc.h
+        class_headers/MagicProjectile.h
 )
 
 # NOTE: Add all defined targets (e.g. executables, libraries, etc. )
