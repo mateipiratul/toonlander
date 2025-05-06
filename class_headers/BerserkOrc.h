@@ -79,7 +79,7 @@ public:
             this->frameHeight = 96;
             this->healthPoints = 40;
 
-            sprite.setOrigin(this->frameWidth / 2.0f, this->frameHeight / 2.0f);
+            sprite.setOrigin(static_cast<float>(this->frameWidth) / 2.0f, static_cast<float>(this->frameHeight) / 2.0f);
 
             loadAnimationTexture("idle", "assets/enemies/berserk/Idle.png");
             loadAnimationTexture("walk", "assets/enemies/berserk/Walk.png");

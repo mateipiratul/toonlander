@@ -34,7 +34,6 @@ protected:
         if (!tex.loadFromFile(texturePath)) {
             throw ResourceLoadError("Texture (Animation)", texturePath, "Failed in Entity::loadAnimationTexture for animation: " + animationName);
         }
-
         tex.setSmooth(false);
         animationTextures[animationName] = tex;
         std::cout << "Loaded texture for animation: " << animationName << std::endl;

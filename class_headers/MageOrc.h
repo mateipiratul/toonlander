@@ -12,8 +12,6 @@
 #include "Entity.h"
 #include "GameExceptions.h"
 
-// # define M_PI 3.14159265358979323846
-
 struct MagicProjectileSpawnInfo {
     sf::Vector2f position;
     sf::Vector2f direction;
@@ -38,10 +36,11 @@ class MageOrc : public Entity {
 
     const int barrageCount = 12;
     const float barrageRadius = 100.f;
-    const float barrageProjectileSpeed = 4.f;
-    const float flurryShotInterval = 0.15f;
-    float flurryProjectileSpeed = 6.5f;
-    float flurryAimVariance = 0.4f;
+    const float barrageProjectileSpeed = 3.f;
+    const float flurryShotInterval = 0.3f;
+    const float flurryProjectileSpeed = 6.f;
+    const float m_pi = 3.14159265358979323846;
+    const float flurryAimVariance = 0.45f;
     sf::Vector2f* playerPositionPtr = nullptr;
 
     std::vector<MagicProjectileSpawnInfo> projectilesToSpawn;
@@ -96,11 +95,7 @@ class MageOrc : public Entity {
 
     void updateSinusoidalMovement(float centerY, float amplitude, float frequency) {
         float timeInState = stateTimer.getElapsedTime().asSeconds();
-        float newY = centerY + amplitude * std::sin(timeInState * frequency * 2.0f * M_PI);
-
-        float minY = 50.f;
-        float maxY = window->getSize().y - 50.f;
-        newY = std::max(minY, std::min(maxY, newY));
+        float newY = centerY + amplitude * std::sin(timeInState * frequency * 2.0f * m_pi);
 
         setPosition(getPosition().x, newY);
     }
@@ -128,7 +123,7 @@ class MageOrc : public Entity {
         sf::Vector2f centerPos = getPosition();
 
         for (int i = 0; i < barrageCount; ++i) {
-            float angle = (static_cast<float>(i) / barrageCount) * 2.0f * M_PI;
+            float angle = (static_cast<float>(i) / barrageCount) * 2.0f * m_pi;
             float spawnX = centerPos.x + barrageRadius * std::cos(angle);
             float spawnY = centerPos.y + barrageRadius * std::sin(angle);
 
@@ -210,6 +205,7 @@ public:
     }
 
     void actions() override {}
+    void update() override {}
 
     void updater(float dt) {
         if (!isAlive) {

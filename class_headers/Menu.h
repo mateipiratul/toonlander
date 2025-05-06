@@ -61,7 +61,7 @@ public:
         title.setCharacterSize(80);
         title.setFillColor(sf::Color::White);
         centerOrigin(title);
-        title.setPosition(window->getSize().x / 2.0f, window->getSize().y * 0.25f);
+        title.setPosition(static_cast<float>(window->getSize().x) / 2.f, static_cast<float>(window->getSize().y) * 0.25f);
 
         startButtonText.setFont(font);
         startButtonText.setString("START");

@@ -94,7 +94,6 @@ class World {
         if (!playerPtr) { throw GameLogicError("Player pointer is null during collision check."); }
 
         sf::FloatRect playerHitbox = playerPtr->getCollisionBounds();
-        // std::vector<Entity*> projectilesToRemove;
 
         for (const auto& entity : entities) {
             if (!entity || entity.get() == playerPtr) continue;

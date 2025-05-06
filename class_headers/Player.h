@@ -14,7 +14,7 @@
 struct ProjectileSpawnInfo {
     sf::Vector2f position;
     sf::Vector2f direction;
-    float speed;
+    float speed{};
 };
 
 class Player : public Entity {
@@ -70,7 +70,7 @@ public:
             float hitboxOffsetX = (static_cast<float>(this->frameWidth) - hitboxWidth) / 2.0f;
             float hitboxOffsetY = static_cast<float>(this->frameHeight) - hitboxHeight;
             customHitbox = sf::FloatRect(hitboxOffsetX, hitboxOffsetY, hitboxWidth, hitboxHeight);
-            sprite.setOrigin(this->frameWidth / 2.f, this->frameHeight / 2.f);
+            sprite.setOrigin(static_cast<float>(this->frameWidth) / 2.f, static_cast<float>(this->frameHeight) / 2.f);
 
             hitboxShape.setSize(sf::Vector2f(hitboxWidth, hitboxHeight));
             hitboxShape.setFillColor(sf::Color(0, 255, 0, 100));
@@ -113,7 +113,7 @@ public:
             if (tryingToShoot && currentShootCooldown <= 0 && onGround && velocity.x == 0 && !isJumping && !isShooting) {
                 wantsToShoot = true;
                 setAnimation("shoot", 4, 0.09f);
-                sprite.setOrigin(frameWidth / 2.0f, frameHeight / 2.0f);
+                sprite.setOrigin(static_cast<float>(this->frameWidth) / 2.0f, static_cast<float>(this->frameHeight) / 2.0f);
                 isShooting = true;
                 currentShootCooldown = shootCooldownTime;
             }
@@ -134,7 +134,7 @@ public:
                 if (onGround && !isJumping) {
                     setAnimation("run", 10, 0.05f);
                 }
-            } else if (movingRight && getPosition().x < window->getSize().x - getHitboxGlobalBounds().width / 2.0f) {
+            } else if (movingRight && getPosition().x < static_cast<float>(window->getSize().x) - getHitboxGlobalBounds().width / 2.0f) {
                 velocity.x = speed;
                 facingRight = true;
                 sprite.setScale(std::abs(currentScaleX), currentScaleY);
@@ -199,6 +199,8 @@ public:
         }
     }
 
+    void update() override {}
+
     void updater(const std::vector<Platform>& platforms) {
         if (isShooting && currentAnimationName == "shoot") {
              if (currentShootCooldown < 5) {
@@ -218,7 +220,7 @@ public:
 
         float groundCheckY = groundY;
         if (playerHitbox.top + playerHitbox.height >= groundCheckY && velocity.y >= 0) {
-             float targetY = groundCheckY - (customHitbox.top + customHitbox.height - frameHeight / 2.0f) * currentScaleY;
+             float targetY = groundCheckY - (customHitbox.top + customHitbox.height - static_cast<float>(frameHeight) / 2.0f) * currentScaleY;
              setPosition(currentPosition.x, targetY);
              velocity.y = 0;
              isJumping = false;
@@ -243,7 +245,7 @@ public:
                     if (playerHitbox.left < platformBounds.left + platformBounds.width &&
                         playerHitbox.left + playerHitbox.width > platformBounds.left)
                     {
-                        float targetY = platformBounds.top - (customHitbox.top + customHitbox.height - frameHeight / 2.0f) * currentScaleY;
+                        float targetY = platformBounds.top - (customHitbox.top + customHitbox.height - static_cast<float>(frameHeight) / 2.0f) * currentScaleY;
                         setPosition(currentPosition.x, targetY);
                         velocity.y = 0;
                         isJumping = false;
@@ -266,7 +268,7 @@ public:
     ProjectileSpawnInfo getProjectileSpawnDetails() {
         sf::Vector2f spawnPos = getPosition();
         spawnPos.x += facingRight ? (getHitboxGlobalBounds().width - 10.f) : -(getHitboxGlobalBounds().width - 10.f);
-        spawnPos.y += frameHeight / 2.0f - 15.f;
+        spawnPos.y += static_cast<float>(frameHeight) / 2.0f - 15.f;
         sf::Vector2f direction = facingRight ? sf::Vector2f(1.f, 0.f) : sf::Vector2f(-1.f, 0.f);
 
         wantsToShoot = false;

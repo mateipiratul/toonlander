@@ -62,8 +62,8 @@ public:
             sf::FloatRect bounds = getVisualBounds();
             float buffer = std::max(bounds.width, bounds.height) * 2.0f;
 
-            if (bounds.left + bounds.width < -buffer || bounds.left > windowSize.x + buffer ||
-                bounds.top + bounds.height < -buffer || bounds.top > windowSize.y + buffer)
+            if (bounds.left + bounds.width < -buffer || bounds.left > static_cast<float>(windowSize.x) + buffer ||
+                bounds.top + bounds.height < -buffer || bounds.top > static_cast<float>(windowSize.y) + buffer)
             { markForRemoval(); }
         }
     }
