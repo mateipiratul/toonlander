@@ -4,14 +4,12 @@
 #include <SFML/Graphics.hpp>
 #include <string>
 #include <vector>
-#include <memory>
 #include <iostream>
 #include <random>
 #include <chrono>
 #include <cmath>
 
 #include "Entity.h"
-#include "MagicProjectile.h"
 #include "GameExceptions.h"
 
 # define M_PI 3.14159265358979323846
@@ -26,19 +24,17 @@ class MageOrc : public Entity {
     enum class State { IDLE, FLYING, BARRAGE_PREPARE, BARRAGE_FIRE, FLURRY, ARTILLERY};
     State currentState;
 
-    sf::Clock stateTimer;
-    float currentStateDuration;
-    sf::Clock actionTimer;
-    float timeSinceLastAction;
-    std::mt19937 rng;
-
     float flyAmplitudeY;
     float flyFrequencyY;
     float idleAmplitudeY;
     float idleFrequencyY;
     float currentCenterY;
-    float targetY;
-    float moveSpeedY = 100.f;
+
+    sf::Clock stateTimer;
+    float currentStateDuration;
+    sf::Clock actionTimer;
+    float timeSinceLastAction;
+    std::mt19937 rng;
 
     const int barrageCount = 12;
     const float barrageRadius = 100.f;
@@ -267,12 +263,10 @@ public:
     void draw() override {
         if (window) {
             window->draw(sprite);
-            if (showHitbox) {
-                sf::FloatRect globalBounds = getCollisionBounds();
-                hitboxShape.setPosition(globalBounds.left, globalBounds.top);
-                hitboxShape.setSize({globalBounds.width, globalBounds.height});
-                window->draw(hitboxShape);
-            }
+            sf::FloatRect globalBounds = getCollisionBounds();
+            hitboxShape.setPosition(globalBounds.left, globalBounds.top);
+            hitboxShape.setSize({globalBounds.width, globalBounds.height});
+            window->draw(hitboxShape);
         }
     }
 

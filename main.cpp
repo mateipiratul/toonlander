@@ -1,7 +1,6 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
 #include <stdexcept>
-#include <vector>
 #include <chrono>
 
 #include "class_headers/World.h"
@@ -11,8 +10,7 @@
 enum class GameState {
     MENU,
     PLAYING,
-    PAUSED,
-    GAME_OVER
+    PAUSED
 };
 
 int main() {
@@ -20,7 +18,7 @@ int main() {
 
     sf::RenderWindow window;
     try {
-        const unsigned int windowWidth = 1600, windowHeight = 900;
+        constexpr unsigned int windowWidth = 1600, windowHeight = 900;
         window.create(sf::VideoMode({windowWidth, windowHeight}), "ToonLander", sf::Style::Default);
         window.setFramerateLimit(90);
         GameState currentState = GameState::MENU;
@@ -63,8 +61,8 @@ int main() {
                             std::cout << "Game Resumed\n";
                         }
                         break;
-                    case GameState::GAME_OVER:
-                        break;
+                    // case GameState::GAME_OVER:
+                    //     break;
                 }
             }
 
@@ -88,8 +86,8 @@ int main() {
                     break;
                 case GameState::PAUSED:
                     break;
-                case GameState::GAME_OVER:
-                    break;
+                // case GameState::GAME_OVER:
+                //     break;
             }
 
             window.clear();
@@ -105,8 +103,8 @@ int main() {
                     window.draw(pauseOverlay);
                     window.draw(pauseText);
                     break;
-                case GameState::GAME_OVER:
-                    break;
+                // case GameState::GAME_OVER:
+                //     break;
             }
 
             window.display();

@@ -98,13 +98,13 @@ class World {
 
         for (const auto& entity : entities) {
             if (!entity || entity.get() == playerPtr) continue;
-            if (BerserkOrc* orc = dynamic_cast<BerserkOrc*>(entity.get())) {
+            if (const BerserkOrc* orc = dynamic_cast<const BerserkOrc*>(entity.get())) {
                  if (!orc->isMarkedForRemoval() && playerHitbox.intersects(orc->getCollisionBounds())) {
                     std::cout << "Collision: Player <-> BerserkOrc!" << std::endl;
                     playerPtr->takeDamage();
                  }
             }
-            else if (MageOrc* mage = dynamic_cast<MageOrc*>(entity.get())) {
+            else if (const MageOrc* mage = dynamic_cast<const MageOrc*>(entity.get())) {
                  if (!mage->isMarkedForRemoval() && playerHitbox.intersects(mage->getCollisionBounds())) {
                     std::cout << "Collision: Player <-> MageOrc!" << std::endl;
                     playerPtr->takeDamage();
@@ -233,7 +233,7 @@ public:
              if (!entity) continue;
 
              if (Player* p = dynamic_cast<Player*>(entity.get())) {
-                 p->update(dt, platforms);
+                 p->update(platforms);
              } else if (MageOrc* mage = dynamic_cast<MageOrc*>(entity.get())) {
                   mage->updatePlayerPosition(&currentPlayerPos);
                   mage->update(dt);

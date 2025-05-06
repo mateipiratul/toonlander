@@ -67,43 +67,59 @@ class BerserkOrc : public Entity {
 
 public:
     BerserkOrc(sf::RenderWindow* win, const sf::Vector2f& startPos, float range = 150.f, float moveSpeed = 2.0f)
-        : Entity(win),
-          currentState(State::IDLE),
+        : Entity(win), // Initialize base first
+          currentState(State::IDLE), // Start idle before choosing state
           patrolRange(range),
           originPoint(startPos),
           speed(moveSpeed),
           isMovingRight(true),
-          rng(std::chrono::steady_clock::now().time_since_epoch().count())
+          rng(static_cast<unsigned long>(std::chrono::steady_clock::now().time_since_epoch().count()))
     {
-        this->frameWidth = 96;
-        this->frameHeight = 96;
-        this->healthPoints = 40;
+        try {
+            this->frameWidth = 96;
+            this->frameHeight = 96;
+            this->healthPoints = 40;
 
-        if (!loadAnimationTexture("idle", "assets/enemies/berserk/Idle.png")) { /* error */ }
-        if (!loadAnimationTexture("walk", "assets/enemies/berserk/Walk.png")) {
-             std::cerr << "Error loading BerserkOrc walk texture. Using idle." << std::endl;
+            sprite.setOrigin(this->frameWidth / 2.0f, this->frameHeight / 2.0f);
+
+            loadAnimationTexture("idle", "assets/enemies/berserk/Idle.png");
+            loadAnimationTexture("walk", "assets/enemies/berserk/Walk.png");
+            loadAnimationTexture("death", "assets/enemies/berserk/Dead.png");
+
+            setScale(2.0f, 2.0f);
+            setPosition(startPos);
+
+            chooseNextState();
+
+            float hitboxWidthRatio = 0.4f;
+            float hitboxHeightRatio = 0.6f;
+            float hitboxWidth = static_cast<float>(this->frameWidth) * hitboxWidthRatio;
+            float hitboxHeight = static_cast<float>(this->frameHeight) * hitboxHeightRatio;
+            float hitboxOffsetX = static_cast<float>(this->frameWidth) * (1.0f - hitboxWidthRatio) / 2.0f;
+            float hitboxOffsetY = static_cast<float>(this->frameHeight) * (1.0f - hitboxHeightRatio);
+            customHitbox = sf::FloatRect(hitboxOffsetX, hitboxOffsetY, hitboxWidth, hitboxHeight);
+
+            hitboxShape.setSize(sf::Vector2f(hitboxWidth, hitboxHeight));
+            hitboxShape.setFillColor(sf::Color(255, 0, 0, 100));
+            hitboxShape.setOutlineColor(sf::Color(200, 0, 0, 200));
+            hitboxShape.setOutlineThickness(1.0f);
+
+        } catch (const ResourceLoadError& e) {
+            std::cerr << "FATAL ERROR during BerserkOrc construction (ResourceLoadError): " << e.what() << std::endl;
+            throw GameError("Failed to initialize BerserkOrc resources.");
+        } catch (const InvalidStateError& e) {
+             std::cerr << "FATAL ERROR during BerserkOrc construction (InvalidStateError): " << e.what() << std::endl;
+             throw GameError("Failed to configure BerserkOrc state during initialization.");
+        } catch (const GameError& e) {
+             std::cerr << "FATAL ERROR during BerserkOrc construction (GameError): " << e.what() << std::endl;
+             throw;
+        } catch (const std::exception& e) {
+             std::cerr << "FATAL std::exception during BerserkOrc construction: " << e.what() << std::endl;
+             throw GameError("Standard exception during BerserkOrc initialization.");
+        } catch (...) {
+             std::cerr << "FATAL unknown exception during BerserkOrc construction." << std::endl;
+             throw GameError("Unknown exception during BerserkOrc initialization.");
         }
-        if (!loadAnimationTexture("death", "assets/enemies/berserk/Dead.png")) { /* error */ }
-
-        chooseNextState();
-
-        setScale(2.0f, 2.0f);
-        setPosition(startPos);
-
-        float hitboxWidthRatio = 0.4f;
-        float hitboxHeightRatio = 0.6f;
-        float hitboxWidth = static_cast<float>(this->frameWidth) * hitboxWidthRatio;
-        float hitboxHeight = static_cast<float>(this->frameHeight) * hitboxHeightRatio;
-
-        float hitboxOffsetX = static_cast<float>(this->frameWidth) * (1.0f - hitboxWidthRatio) / 2.0f;
-        float hitboxOffsetY = static_cast<float>(this->frameHeight) * (1.0f - hitboxHeightRatio);
-
-        customHitbox = sf::FloatRect(hitboxOffsetX, hitboxOffsetY, hitboxWidth, hitboxHeight);
-
-        hitboxShape.setSize(sf::Vector2f(hitboxWidth, hitboxHeight));
-        hitboxShape.setFillColor(sf::Color(255, 255, 255, 100));
-        hitboxShape.setOutlineColor(sf::Color(200, 200, 200, 200));
-        hitboxShape.setOutlineThickness(1.0f);
     }
 
     void actions() override {}
@@ -145,12 +161,10 @@ public:
     void draw() override {
         if (window) {
             window->draw(sprite);
-            if (showHitbox) {
-                sf::FloatRect globalBounds = getCollisionBounds(); // method
-                hitboxShape.setPosition(globalBounds.left, globalBounds.top);
-                hitboxShape.setSize({globalBounds.width, globalBounds.height});
-                window->draw(hitboxShape);
-            }
+            sf::FloatRect globalBounds = getCollisionBounds(); // method
+            hitboxShape.setPosition(globalBounds.left, globalBounds.top);
+            hitboxShape.setSize({globalBounds.width, globalBounds.height});
+            window->draw(hitboxShape);
         }
     }
 

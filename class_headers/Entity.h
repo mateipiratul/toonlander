@@ -27,8 +27,8 @@ protected:
     float currentScaleX = 1.f;
     float currentScaleY = 1.f;
 
-    bool loadAnimationTexture(const std::string& animationName, const std::string& texturePath) {
-        if (animationTextures.count(animationName)) { return true; }
+    void loadAnimationTexture(const std::string& animationName, const std::string& texturePath) {
+        if (animationTextures.count(animationName)) return;
 
         sf::Texture tex;
         if (!tex.loadFromFile(texturePath)) {
@@ -38,7 +38,6 @@ protected:
         tex.setSmooth(false);
         animationTextures[animationName] = tex;
         std::cout << "Loaded texture for animation: " << animationName << std::endl;
-        return true;
     }
 
 public:

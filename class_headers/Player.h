@@ -100,12 +100,10 @@ public:
     void draw() override {
         if (window) {
             window->draw(this->sprite);
-            if (showHitbox) {
-                sf::FloatRect globalHitbox = getHitboxGlobalBounds();
-                hitboxShape.setPosition(globalHitbox.left, globalHitbox.top);
-                hitboxShape.setSize({globalHitbox.width, globalHitbox.height});
-                window->draw(hitboxShape);
-            }
+            sf::FloatRect globalHitbox = getHitboxGlobalBounds();
+            hitboxShape.setPosition(globalHitbox.left, globalHitbox.top);
+            hitboxShape.setSize({globalHitbox.width, globalHitbox.height});
+            window->draw(hitboxShape);
         }
     }
 
@@ -202,7 +200,7 @@ public:
         }
     }
 
-    void update(float dt, const std::vector<Platform>& platforms) {
+    void update(const std::vector<Platform>& platforms) {
         if (isShooting && currentAnimationName == "shoot") {
              if (currentShootCooldown < 5) {
                  isShooting = false;
@@ -224,7 +222,7 @@ public:
              float targetY = groundCheckY - (customHitbox.top + customHitbox.height - frameHeight / 2.0f) * currentScaleY;
              setPosition(currentPosition.x, targetY);
              velocity.y = 0;
-             if (isJumping) isJumping = false;
+             isJumping = false;
              onGround = true;
              isDropping = false;
              if (!isShooting && velocity.x == 0 && currentAnimationName != "idle") {
@@ -249,7 +247,7 @@ public:
                         float targetY = platformBounds.top - (customHitbox.top + customHitbox.height - frameHeight / 2.0f) * currentScaleY;
                         setPosition(currentPosition.x, targetY);
                         velocity.y = 0;
-                        if (isJumping) isJumping = false;
+                        isJumping = false;
                         onGround = true;
                         isDropping = false;
                         if (!isShooting && velocity.x == 0 && currentAnimationName != "idle") {
