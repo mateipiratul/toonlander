@@ -199,7 +199,7 @@ public:
         }
     }
 
-    void update(const std::vector<Platform>& platforms) {
+    void updater(const std::vector<Platform>& platforms) {
         if (isShooting && currentAnimationName == "shoot") {
              if (currentShootCooldown < 5) {
                  isShooting = false;

@@ -12,7 +12,7 @@
 #include "Entity.h"
 #include "GameExceptions.h"
 
-# define M_PI 3.14159265358979323846
+// # define M_PI 3.14159265358979323846
 
 struct MagicProjectileSpawnInfo {
     sf::Vector2f position;
@@ -211,7 +211,7 @@ public:
 
     void actions() override {}
 
-    void update(float dt) {
+    void updater(float dt) {
         if (!isAlive) {
             if (currentAnimationName == "death") {
                 Entity::update();

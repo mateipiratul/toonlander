@@ -233,10 +233,10 @@ public:
              if (!entity) continue;
 
              if (Player* p = dynamic_cast<Player*>(entity.get())) {
-                 p->update(platforms);
+                 p->updater(platforms);
              } else if (MageOrc* mage = dynamic_cast<MageOrc*>(entity.get())) {
                   mage->updatePlayerPosition(&currentPlayerPos);
-                  mage->update(dt);
+                  mage->updater(dt);
              } else if (BerserkOrc* orc = dynamic_cast<BerserkOrc*>(entity.get())) {
                   orc->update();
              }
