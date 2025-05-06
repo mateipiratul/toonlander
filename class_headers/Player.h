@@ -37,7 +37,6 @@ class Player : public Entity {
 
     sf::RectangleShape hitboxShape;
     sf::FloatRect customHitbox;
-    bool showHitbox = true;
 
 public:
     Player(sf::RenderWindow* win,

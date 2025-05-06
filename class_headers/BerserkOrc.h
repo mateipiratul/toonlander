@@ -23,7 +23,6 @@ class BerserkOrc : public Entity {
 
     sf::RectangleShape hitboxShape;
     sf::FloatRect customHitbox;
-    bool showHitbox = true;
 
     bool markedForRemoval = false;
 

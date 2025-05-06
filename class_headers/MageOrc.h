@@ -38,17 +38,16 @@ class MageOrc : public Entity {
 
     const int barrageCount = 12;
     const float barrageRadius = 100.f;
-    const float barrageProjectileSpeed = 3.f;
+    const float barrageProjectileSpeed = 4.f;
     const float flurryShotInterval = 0.15f;
-    float flurryProjectileSpeed = 9.f;
-    float flurryAimVariance = 0.2f;
+    float flurryProjectileSpeed = 6.5f;
+    float flurryAimVariance = 0.4f;
     sf::Vector2f* playerPositionPtr = nullptr;
 
     std::vector<MagicProjectileSpawnInfo> projectilesToSpawn;
 
     sf::RectangleShape hitboxShape;
     sf::FloatRect customHitbox;
-    bool showHitbox = true;
 
     bool markedForRemoval = false;
     bool isAlive = true;
