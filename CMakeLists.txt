@@ -58,6 +58,18 @@ endif()
 # NOTE: update executable name in .github/workflows/cmake.yml:25 when changing name here
 add_executable(${MAIN_EXECUTABLE_NAME}
     main.cpp
+    class_sources/BerserkOrc.cpp
+    class_sources/Entity.cpp
+    class_sources/MageOrc.cpp
+    class_sources/MagicProjectile.cpp
+    class_sources/Menu.cpp
+    class_sources/Platform.cpp
+    class_sources/Player.cpp
+    class_sources/Projectile.cpp
+    class_sources/World.cpp
+    class_sources/ConcreteEntityFactory.cpp
+        class_sources/SoundManager.cpp
+        class_sources/Subject.cpp
 )
 
 # NOTE: Add all defined targets (e.g. executables, libraries, etc. )
@@ -74,7 +86,12 @@ target_include_directories(${MAIN_EXECUTABLE_NAME} SYSTEM PRIVATE generated/incl
 # target_include_directories(${MAIN_EXECUTABLE_NAME} SYSTEM PRIVATE ext/<SomeHppLib>/include)
 target_include_directories(${MAIN_EXECUTABLE_NAME} SYSTEM PRIVATE ${SFML_SOURCE_DIR}/include)
 target_link_directories(${MAIN_EXECUTABLE_NAME} PRIVATE ${SFML_BINARY_DIR}/lib)
-target_link_libraries(${MAIN_EXECUTABLE_NAME} PRIVATE sfml-graphics sfml-window sfml-system Threads::Threads)
+target_link_libraries(${MAIN_EXECUTABLE_NAME} PRIVATE
+        sfml-graphics
+        sfml-window
+        sfml-system
+        sfml-audio
+        Threads::Threads)
 
 if(APPLE)
 elseif(UNIX)
