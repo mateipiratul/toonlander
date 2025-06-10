@@ -25,6 +25,7 @@ public:
     // core observer pattern implementation
     void onNotify(GameEvent event) override;
 
+    // players
     void playIntroTheme();
     void stopIntroTheme();
     bool isIntroThemePlaying() const;

@@ -11,6 +11,7 @@ class Projectile : public Entity {
 public:
     Projectile(sf::RenderWindow* win, float x, float y, float dx, float dy, float projectileSpeed);
 
+    // no implementations for member functions
     void actions() override;
     void takeDamage() override;
     void update() override;

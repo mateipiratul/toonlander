@@ -72,7 +72,7 @@ public:
 
     void updater(float dt);
     void markForRemoval();
-    bool isMarkedForRemoval() const;
+    bool isMarkedForRemoval() const; // getter
     std::vector<MagicProjectileSpawnInfo> getProjectilesToSpawn();
     void updatePlayerPosition(sf::Vector2f* playerPos);
     sf::FloatRect getCollisionBounds() const;

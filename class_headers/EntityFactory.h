@@ -10,7 +10,7 @@ class Entity;
 class EntityFactory {
 public:
     virtual ~EntityFactory() = default;
-
+    // specific entity-factories
     virtual std::unique_ptr<Entity> makeBerserkOrc(sf::RenderWindow* win, const sf::Vector2f& pos) = 0;
     virtual std::unique_ptr<Entity> makeMageOrc(sf::RenderWindow* win, const sf::Vector2f& pos) = 0;
     virtual std::unique_ptr<Entity> makeProjectile(sf::RenderWindow* win, float x, float y, float dx, float dy, float speed) = 0;

@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <string>
 
+// game exceptions
 class GameError : public std::runtime_error {
 public:
     explicit GameError(const std::string& message)

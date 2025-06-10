@@ -3,6 +3,7 @@
 
 #include "GameEvents.h"
 
+// observer virtual class
 class Observer {
 public:
     virtual ~Observer() = default;

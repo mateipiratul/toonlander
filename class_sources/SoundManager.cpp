@@ -82,12 +82,15 @@ void SoundManager::onNotify(GameEvent event) {
             if (isIntroThemePlaying()) { stopIntroTheme(); }
             playMenuTheme();
             break;
+        case GameEvent::GAMEPLAY_STARTED:
+            stopMenuTheme();
         default:
             std::cout << "SoundManager: No specific sound action for event " << static_cast<int>(event) << std::endl;
             break;
     }
 }
 
+// player functions
 void SoundManager::playIntroTheme() {
     if (introTheme.getStatus() != sf::Music::Playing) {
         introTheme.play();

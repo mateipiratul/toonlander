@@ -17,6 +17,7 @@ public:
     void actions() override;
     void takeDamage() override;
 
+    // specific member functions
     void markForRemoval();
     bool isMarkedForRemoval() const;
     void checkOffScreen();

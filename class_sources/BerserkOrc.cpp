@@ -142,7 +142,7 @@ void BerserkOrc::update() {
     Entity::update(); // base class update function call
 }
 
-void BerserkOrc::draw() {
+void BerserkOrc::draw() { // draw entity
     if (window) {
         window->draw(sprite);
         sf::FloatRect globalBounds = getCollisionBounds(); // method
@@ -152,6 +152,7 @@ void BerserkOrc::draw() {
     }
 }
 
+// position getter
 sf::FloatRect BerserkOrc::getCollisionBounds() const {
     return sprite.getTransform().transformRect(customHitbox);
 }
@@ -174,4 +175,5 @@ void BerserkOrc::markForRemoval() {
     }
 }
 
+// getter for remove handling
 bool BerserkOrc::isMarkedForRemoval () const { return markedForRemoval; }

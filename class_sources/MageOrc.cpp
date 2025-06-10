@@ -11,9 +11,9 @@
 
 #define M_PI 3.14
 
-// Helper for linear interpolation (can be moved to a utility file if used elsewhere)
+// helper for linear interpolation
 float lerp(float a, float b, float t) {
-    t = std::max(0.0f, std::min(1.0f, t)); // Clamp t to [0, 1]
+    t = std::max(0.0f, std::min(1.0f, t)); // clamp t to [0, 1]
     return a + t * (b - a);
 }
 
@@ -24,14 +24,8 @@ MageOrc::MageOrc(sf::RenderWindow* win, const sf::Vector2f &startPos) :
     idleAmplitudeY(25.f),
     idleFrequencyY(0.6f),
     currentCenterY(startPos.y),
-    // currentStateDuration set in chooseNextState
-    // actionTimer default constructed
     timeSinceLastAction(0.f),
     rng(static_cast<unsigned long>(std::chrono::steady_clock::now().time_since_epoch().count()))
-    // projectilesToSpawn default constructed
-    // hitboxShape default constructed
-    // customHitbox default constructed
-    // stateTimer default constructed
 {
     this->frameWidth = 96;
     this->frameHeight = 96;
@@ -78,14 +72,13 @@ MageOrc::MageOrc(sf::RenderWindow* win, const sf::Vector2f &startPos) :
 }
 
 void MageOrc::chooseNextState() {
-    if (!isAlive) { // If dead, try to set death animation if not already set
+    if (!isAlive) { // if dead set death animation if not already set
         if (currentAnimationName != "death") {
-            // Assuming "death" animation has 5 frames based on your comment
-            setAnimation("death", 5, 0.25f); // 0.25s per frame = 1.25s total
+            setAnimation("death", 5, 0.25f);
         }
-        currentState = State::IDLE; // Or a specific State::DEAD
+        currentState = State::IDLE;
         velocity = {0, 0};
-        currentStateDuration = 9999.f; // Effectively infinite, waits for removal
+        currentStateDuration = 9999.f;
         stateTimer.restart();
         return;
     }
@@ -100,13 +93,8 @@ void MageOrc::chooseNextState() {
     // Define animation parameters here for clarity
     const int idleFrames = 4;    float idleInterval = 0.2f;
     const int flyFrames = 4;     float flyInterval = 0.15f;
-    const int barrageFrames = 4; // Assuming barrage animation covers prepare & fire, or use distinct ones
-                                 // Your old code used setAnimation("barrage", 4, 0.2f) for prepare
-                                 // then setAnimation("barrage", 8, 0.1f) for fire.
-                                 // Let's assume a single "barrage" animation that plays through.
-                                 // If it has distinct parts, you'd need two animation names.
-                                 // For now, "barrage" with more frames if it's a combined anim.
-    float barrageInterval = 0.15f; // Adjust if barrage anim is longer
+    const int barrageFrames = 4;
+    float barrageInterval = 0.15f;
     const int flurryFrames = 5;  float flurryInterval = 0.12f;
 
 
@@ -116,7 +104,6 @@ void MageOrc::chooseNextState() {
         velocity = {0, 0};
         currentCenterY = getPosition().y;
         currentStateDuration = std::uniform_real_distribution<float>(2.f, 3.f)(rng);
-        // std::cout << "MageOrc: IDLE. CenterY: " << currentCenterY << std::endl;
     } else if (choice <= 3) { // FLYING
         currentState = State::FLYING;
         setAnimation("fly", flyFrames, flyInterval);
@@ -124,21 +111,18 @@ void MageOrc::chooseNextState() {
         float targetFlyCenterY = static_cast<float>(window->getSize().y) / 2.f + std::uniform_real_distribution<float>(-flyAmplitudeY * 0.3f, flyAmplitudeY * 0.3f)(rng);
         currentCenterY = targetFlyCenterY;
         currentStateDuration = std::uniform_real_distribution<float>(4.f, 6.f)(rng);
-        // std::cout << "MageOrc: FLYING. Target CenterY: " << currentCenterY << std::endl;
     } else if (choice <= 6) { // BARRAGE
         currentState = State::BARRAGE_PREPARE;
-        setAnimation("barrage", barrageFrames, barrageInterval); // Use a single barrage animation for now
+        setAnimation("barrage", barrageFrames, barrageInterval);
         velocity = {0, 0};
         currentCenterY = getPosition().y;
-        currentStateDuration = 1.0f; // Duration of BARRAGE_PREPARE state
-        // std::cout << "MageOrc: BARRAGE_PREPARE. CenterY: " << currentCenterY << std::endl;
+        currentStateDuration = 1.0f; // duration of BARRAGE_PREPARE state
     } else { // FLURRY
         currentState = State::FLURRY;
         setAnimation("flurry", flurryFrames, flurryInterval);
         velocity = {0, 0};
         currentCenterY = getPosition().y;
         currentStateDuration = std::uniform_real_distribution<float>(3.0f, 5.0f)(rng);
-        // std::cout << "MageOrc: FLURRY. CenterY: " << currentCenterY << std::endl;
     }
     stateTimer.restart();
 }
@@ -159,7 +143,7 @@ sf::Vector2f MageOrc::calculateVagueAimDirection() {
     }
 
     sf::Vector2f magePos = getPosition();
-    sf::Vector2f playerPosVal = *playerPositionPtr; // Dereference (it's sf::Vector2f* now)
+    sf::Vector2f playerPosVal = *playerPositionPtr; // dereference player pointer
     sf::Vector2f exactDir = playerPosVal - magePos;
 
     float magSq = exactDir.x * exactDir.x + exactDir.y * exactDir.y;
@@ -171,12 +155,12 @@ sf::Vector2f MageOrc::calculateVagueAimDirection() {
 
     float exactAngle = std::atan2(exactDir.y, exactDir.x);
     std::uniform_real_distribution<float> varianceDist(-flurryAimVariance, flurryAimVariance);
-    float variedAngle = exactAngle + varianceDist(rng);
+    float variedAngle = exactAngle + varianceDist(rng); // 'randomness' of bullet generation
 
     return {std::cos(variedAngle), std::sin(variedAngle)};
 }
 
-void MageOrc::prepareBarrage() {
+void MageOrc::prepareBarrage() { // projectile barrage logic
     if (!isAlive) return;
     projectilesToSpawn.clear();
     sf::Vector2f centerPos = getPosition();
@@ -202,37 +186,31 @@ void MageOrc::fireFlurryShot(float dt) {
         timeSinceLastAction = 0.f;
         sf::Vector2f spawnPos = getPosition();
         float horizontalOffset = 40.f;
-        // Adjust x based on which way sprite is scaled (facing)
-        // Entity::currentScaleX stores absolute scale. sf::Sprite::getScale().x has the sign.
         spawnPos.x += (sprite.getScale().x > 0 ? horizontalOffset : -horizontalOffset);
         sf::Vector2f direction = calculateVagueAimDirection();
         projectilesToSpawn.push_back({spawnPos, direction, flurryProjectileSpeed});
     }
 }
 
-void MageOrc::actions() { /* AI logic is in updater */ }
-void MageOrc::update() { /* Entity::update() is called by updater() */ }
+void MageOrc::actions() {}
+void MageOrc::update() {}
 
 void MageOrc::updater(float dt) {
-    // Logic for when !isAlive (death animation handling)
     if (!isAlive) {
         if (currentAnimationName == "death") {
-            // Manual check for death animation completion since isAnimationFinished was removed from Entity
-            // Assumes "death" animation is 5 frames, and currentAnimationInterval is set correctly for it.
-            const int deathAnimTotalFrames = 5; // Match what's in takeDamage()
+            const int deathAnimTotalFrames = 5;
             if (this->currentFrameIndex == (deathAnimTotalFrames - 1) &&
                 this->animationClock.getElapsedTime().asSeconds() >= this->currentAnimationInterval) {
                 if (!markedForRemoval) {
-                    // std::cout << "MageOrc: Death animation cycle complete, marking for removal." << std::endl;
                     markedForRemoval = true;
                 }
             }
         }
-        Entity::update(); // Continue updating animation (e.g., playing out death)
+        Entity::update();
         return;
     }
 
-    // Current state logic
+    // current state logic
     switch (currentState) {
         case State::IDLE:
             updateSinusoidalMovement(currentCenterY, idleAmplitudeY, idleFrequencyY);
@@ -246,35 +224,26 @@ void MageOrc::updater(float dt) {
                 prepareBarrage();
                 currentState = State::BARRAGE_FIRE;
                 stateTimer.restart();
-                currentStateDuration = 0.5f; // Duration of "firing" pose
-                // If "barrage" animation is long and covers both prepare and fire,
-                // you might not need to call setAnimation again here.
-                // If they are distinct, you would: setAnimation("barrage_fire", ...);
-                // For now, assuming "barrage" animation continues or you manage frames.
-                // std::cout << "MageOrc: Transitioning to BARRAGE_FIRE." << std::endl;
+                currentStateDuration = 0.5f; // duration of firing animation
             }
             break;
         case State::BARRAGE_FIRE:
             if (stateTimer.getElapsedTime().asSeconds() >= currentStateDuration) {
-                fireBarrage(); // This calls chooseNextState
+                fireBarrage(); // calls chooseNextState
             }
             break;
         case State::FLURRY:
             fireFlurryShot(dt);
             updateSinusoidalMovement(currentCenterY, idleAmplitudeY * 0.7f, idleFrequencyY * 1.2f);
             break;
-        case State::ARTILLERY: // Not implemented yet
-            updateSinusoidalMovement(currentCenterY, idleAmplitudeY, idleFrequencyY);
-            break;
     }
 
-    // Check for overall state duration timeout
     if (currentState != State::BARRAGE_FIRE && currentState != State::BARRAGE_PREPARE) {
          if (stateTimer.getElapsedTime().asSeconds() >= currentStateDuration) {
             chooseNextState();
         }
     }
-    Entity::update(); // Update current animation frames
+    Entity::update();
 }
 
 void MageOrc::draw() {
@@ -324,7 +293,6 @@ std::vector<MagicProjectileSpawnInfo> MageOrc::getProjectilesToSpawn() {
     return queueToReturn;
 }
 
-// Corrected signature to match your MageOrc.h (sf::Vector2f*)
 void MageOrc::updatePlayerPosition(sf::Vector2f* playerPos) {
     playerPositionPtr = playerPos;
 }

@@ -16,8 +16,11 @@
 #include <algorithm>
 #include <stdexcept>
 
-World::World(sf::RenderWindow* win, std::unique_ptr<EntityFactory> factory) :
-    window(win), entityFactory(std::move(factory)), playerPtr(nullptr), mageOrcPtr(nullptr) {
+World::World(sf::RenderWindow* win, std::unique_ptr<EntityFactory> factory, SoundManager* sndMgr) :
+    window(win),
+    entityFactory(std::move(factory)),
+    soundManagerPtr(sndMgr),
+    playerPtr(nullptr), mageOrcPtr(nullptr) {
     if (!window) {
         throw ConfigurationError("World requires a valid RenderWindow pointer!");
     }
@@ -75,6 +78,7 @@ void World::createInitialEntitiesAndPlayer() {
 
     try {
         playerPtr = &Player::getInstance(window, "idle", "assets/player/Idle.png", 6, 0.1f, playerStartPosition);
+        playerPtr->addObserver(soundManagerPtr);
     } catch (const std::exception& e) {
         std::cerr << "ERROR creating Player singleton: " << e.what() << std::endl;
         throw;
@@ -109,10 +113,10 @@ void World::createInitialEntitiesAndPlayer() {
 void World::handleInput() {
     if (playerPtr && playerPtr->getHealthPoints() > 0) {
         playerPtr->actions();
-    }
+    } // handle user input (actions of Player)
 }
 
-void World::update(float dt) {
+void World::update(float dt) { // global update
     sf::Vector2f currentPlayerPos = {0,0};
     if (playerPtr) {
         if (playerPtr->getHealthPoints() > 0) {
@@ -131,13 +135,14 @@ void World::update(float dt) {
                 mage->updatePlayerPosition(nullptr);
             }
             mage->updater(dt);
-        } else if (auto* orc = dynamic_cast<BerserkOrc*>(entityPtr.get())) { // Requires BerserkOrc.h
+        } else if (auto* orc = dynamic_cast<BerserkOrc*>(entityPtr.get())) {
             orc->update();
-        } else { // For other entities like Projectiles, which have their own update
+        } else { // for other entities like projectiles
             entityPtr->update();
         }
     }
 
+    // spawn all projectiles
     spawnPlayerProjectiles();
     spawnEnemyProjectiles();
 
@@ -230,7 +235,6 @@ void World::checkCollisions() {
 }
 
 void World::removeMarkedEntities() {
-    // ... (same, dynamic_casts here also need full type definitions) ...
     entities.erase(
         std::remove_if(entities.begin(), entities.end(),
             [](const std::unique_ptr<Entity>& entity) {
@@ -260,7 +264,6 @@ void World::removeMarkedEntities() {
 }
 
 void World::draw() {
-    // ... (same) ...
     window->draw(backgroundSprite);
     for (const auto& platform : platforms) {
         platform.draw(*window);
@@ -274,7 +277,6 @@ void World::draw() {
 }
 
 bool World::isGameOver() const {
-    // ... (same) ...
     if (playerPtr) {
         return playerPtr->getHealthPoints() <= 0;
     }

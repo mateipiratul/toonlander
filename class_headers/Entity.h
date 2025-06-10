@@ -8,10 +8,10 @@
 class Entity {
 protected:
     sf::Sprite sprite;
-    sf::Vector2f velocity{0.f, 0.f};
-    int frameWidth{0}, frameHeight{0};
-    int healthPoints{1};
-    sf::RenderWindow* window;
+    sf::Vector2f velocity{0.f, 0.f}; // velocity of entity
+    int frameWidth{0}, frameHeight{0}; // sprite measures
+    int healthPoints{1}; // default hp
+    sf::RenderWindow* window; // pointer to window
     std::map<std::string, sf::Texture> animationTextures;
     std::string currentAnimationName{"none"};
     sf::IntRect currentFrameRect;

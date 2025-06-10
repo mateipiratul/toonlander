@@ -8,6 +8,7 @@
 #include <vector>
 #include <cmath>
 
+// track if singleton is already created
 bool Player::instanceExists = false;
 
 Player& Player::getInstance(sf::RenderWindow* win,
@@ -16,10 +17,12 @@ Player& Player::getInstance(sf::RenderWindow* win,
                             int initialNumFrames,
                             float initialAnimationInterval,
                             const sf::Vector2f& startPosition) {
+    // must not be null on first call
     if (!instanceExists && !win) {
         throw std::runtime_error("Player::getInstance() called for the first time with nullptr window. Initialization required.");
     }
 
+    // singleton pattern ensures one instance
     static Player instance(win, initialAnimationName, initialTexturePath,
                            initialNumFrames, initialAnimationInterval, startPosition);
 
@@ -33,6 +36,7 @@ Player::Player(sf::RenderWindow* win,
                float initialAnimationInterval,
                const sf::Vector2f& startPosition)
     : Entity(win) {
+    // prevent multiple instantiations
     if (instanceExists) { throw std::runtime_error("Player singleton already constructed. Do not call constructor directly."); }
 
     if (!win) { throw GameLogicError("Player constructor called with nullptr window (should be via getInstance)."); }
@@ -42,6 +46,7 @@ Player::Player(sf::RenderWindow* win,
         this->frameHeight = 128;
         this->healthPoints = 3;
 
+        // load base and state-specific animations
         loadAnimationTexture(initialAnimationName, initialTexturePath);
         loadAnimationTexture("run", "assets/player/Run.png");
         loadAnimationTexture("jump", "assets/player/Jump.png");
@@ -54,24 +59,24 @@ Player::Player(sf::RenderWindow* win,
         facingRight = true;
         Entity::setAnimation(initialAnimationName, initialNumFrames, initialAnimationInterval);
 
+        // setup local hitbox relative to sprite
         float hitboxWidth_unscaled = 30.f;
         float hitboxHeight_unscaled = static_cast<float>(this->frameHeight) * (3.f / 5.f);
         float hitboxOffsetX_local_unscaled = (static_cast<float>(this->frameWidth) - hitboxWidth_unscaled) / 2.0f;
         float hitboxOffsetY_local_unscaled = static_cast<float>(this->frameHeight) - hitboxHeight_unscaled;
         customHitbox_local = sf::FloatRect(hitboxOffsetX_local_unscaled, hitboxOffsetY_local_unscaled, hitboxWidth_unscaled, hitboxHeight_unscaled);
 
-        // sprite.setOrigin(static_cast<float>(this->frameWidth) / 2.f, static_cast<float>(this->frameHeight) / 2.f);
-
+        // debug shape for hitbox visualization
         hitboxShape_debug.setSize(sf::Vector2f(customHitbox_local.width * currentScaleX, customHitbox_local.height * currentScaleY));
         hitboxShape_debug.setFillColor(sf::Color(0, 255, 0, 100));
         hitboxShape_debug.setOutlineColor(sf::Color::Green);
         hitboxShape_debug.setOutlineThickness(1.0f);
 
-        instanceExists = true; // mark that the instance has been constructed
+        instanceExists = true; // construction successful
 
     } catch (const ResourceLoadError& e) {
         std::cerr << "FATAL ERROR during Player construction (ResourceLoadError): " << e.what() << std::endl;
-        instanceExists = false; // construction failed
+        instanceExists = false; // failed construction
         throw GameError("Failed to initialize Player resources due to loading error.");
     } catch (const InvalidStateError& e) {
         std::cerr << "FATAL ERROR during Player construction (InvalidStateError): " << e.what() << std::endl;
@@ -92,6 +97,7 @@ Player::Player(sf::RenderWindow* win,
     }
 }
 
+// transforms hitbox to world space
 sf::FloatRect Player::getHitboxGlobalBounds() const { return sprite.getTransform().transformRect(customHitbox_local); }
 
 sf::FloatRect Player::getCollisionBounds() const { return getHitboxGlobalBounds(); }
@@ -99,6 +105,8 @@ sf::FloatRect Player::getCollisionBounds() const { return getHitboxGlobalBounds(
 void Player::draw() {
     if (window) {
         window->draw(this->sprite);
+
+        // update and draw debug hitbox
         sf::FloatRect globalHitbox = getHitboxGlobalBounds();
         hitboxShape_debug.setPosition(globalHitbox.left, globalHitbox.top);
         hitboxShape_debug.setSize({globalHitbox.width, globalHitbox.height});
@@ -107,13 +115,16 @@ void Player::draw() {
 }
 
 void Player::actions() {
-    // if (healthPoints <= 0) { // no actions if dead
-    //     velocity.x = 0; // ensure stopped
-    //     return;
-    // }
+    // skip input if player is dead
+    if (healthPoints <= 0) {
+        velocity.x = 0;
+        return;
+    }
 
     wantsToShootFlag = false;
     bool tryingToShoot = sf::Keyboard::isKeyPressed(sf::Keyboard::X);
+
+    // handle shooting input
     if (tryingToShoot && currentShootCooldown <= 0 && onGround && velocity.x == 0 && !isJumping && !isShooting) {
         wantsToShootFlag = true;
         setAnimation("shoot", 4, 0.09f);
@@ -121,9 +132,10 @@ void Player::actions() {
         currentShootCooldown = shootCooldownFrames;
     }
 
-    if (currentShootCooldown > 0) { currentShootCooldown--; }
+    if (currentShootCooldown > 0) currentShootCooldown--;
 
     if (!isShooting) {
+        // handle movement input
         bool movingLeft = sf::Keyboard::isKeyPressed(sf::Keyboard::Left);
         bool movingRight = sf::Keyboard::isKeyPressed(sf::Keyboard::Right);
 
@@ -133,16 +145,21 @@ void Player::actions() {
         } else if (movingRight) {
             velocity.x = moveSpeed;
             facingRight = true;
-        } else { velocity.x = 0; }
+        } else {
+            velocity.x = 0;
+        }
 
+        // flip sprite based on direction
         sprite.setScale(facingRight ? this->currentScaleX : -this->currentScaleX, this->currentScaleY);
 
+        // choose idle or run animation
         if (onGround && !isJumping) {
             if (velocity.x != 0) {
                 if (currentAnimationName != "run") setAnimation("run", 10, 0.05f);
             } else if (currentAnimationName != "idle") setAnimation("idle", 6, 0.1f);
         }
 
+        // handle jump input
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Z)) {
             if (canJump && onGround) {
                 jump();
@@ -151,6 +168,7 @@ void Player::actions() {
             canJump = true;
         }
 
+        // handle drop input
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::C) && onGround && !isJumping) {
             isDropping = true;
             onGround = false;
@@ -160,6 +178,7 @@ void Player::actions() {
 }
 
 void Player::jump() {
+    // activate jump state and notify
     setAnimation("jump", 10, 0.05f);
     notifyObservers(GameEvent::PLAYER_JUMPED);
     velocity.y = jumpStrength;
@@ -169,13 +188,16 @@ void Player::jump() {
     isDropping = false;
 }
 
-void Player::update() { Entity::update(); }
+void Player::update() {
+    Entity::update();
+}
 
 void Player::updater(const std::vector<Platform>& platforms) {
-    if (healthPoints <= 0) { // If dead, only physics might apply if falling during death anim
+    // if dead, apply gravity and align to ground
+    if (healthPoints <= 0) {
         if (!onGround) velocity.y += gravityForce;
-        sprite.move(0, velocity.y); // Only vertical movement if any
-        // Simplified ground check if falling while dead
+        sprite.move(0, velocity.y);
+
         sf::FloatRect playerHitbox = getHitboxGlobalBounds();
         if (playerHitbox.top + playerHitbox.height >= defaultGroundY && velocity.y >= 0) {
             float hitboxBottomOffsetFromOrigin = (customHitbox_local.top + customHitbox_local.height) - (static_cast<float>(frameHeight) / 2.f);
@@ -187,30 +209,28 @@ void Player::updater(const std::vector<Platform>& platforms) {
         return;
     }
 
+    // shooting animation overrides idle/run
     if (isShooting && currentAnimationName == "shoot") {
         if (currentShootCooldown < 3) {
-            isShooting = false; // Done shooting
-            // Revert to idle or run based on state (velocity.x was set to 0 during shoot)
-            if (onGround) { // Velocity.x should be 0 if just finished shooting on ground
+            isShooting = false;
+            if (onGround) {
                 setAnimation("idle", 6, 0.1f);
             } else {
-                // If shot in air, jump animation should resume or be set by falling logic
-                if (!isJumping) setAnimation("jump", 10, 0.05f); // Or a "falling" animation
+                if (!isJumping) setAnimation("jump", 10, 0.05f);
             }
         }
     }
 
-    if (!onGround) {
-        velocity.y += gravityForce;
-    }
+    if (!onGround) velocity.y += gravityForce;
+
     sprite.move(isShooting ? 0.f : velocity.x, velocity.y);
 
-    bool wasOnGround = onGround;
     onGround = false;
     sf::FloatRect playerHitbox = getHitboxGlobalBounds();
     sf::Vector2f currentPlayerPos = getPosition();
     float playerBottomY = playerHitbox.top + playerHitbox.height;
 
+    // check for ground collision
     if (playerBottomY >= defaultGroundY && velocity.y >= 0) {
         float hitboxBottomOffsetFromOrigin = (customHitbox_local.top + customHitbox_local.height) - (static_cast<float>(frameHeight) / 2.f);
         float targetY = defaultGroundY - hitboxBottomOffsetFromOrigin * currentScaleY;
@@ -224,19 +244,22 @@ void Player::updater(const std::vector<Platform>& platforms) {
         }
     }
 
+    // platform collision handling
     for (const auto& platform : platforms) {
         if (onGround) break;
 
         sf::FloatRect platformBounds = platform.getBounds();
-        playerHitbox = getHitboxGlobalBounds(); // refetch position might have changed
+        playerHitbox = getHitboxGlobalBounds();
 
         if (playerHitbox.intersects(platformBounds)) {
-            float previousPlayerBottom = playerHitbox.top + playerHitbox.height - velocity.y; // Approx previous
+            float previousPlayerBottom = playerHitbox.top + playerHitbox.height - velocity.y;
+
             if (velocity.y >= 0 && !isDropping &&
-                previousPlayerBottom <= platformBounds.top + (velocity.y > 0 ? velocity.y : 5.0f) && // More robust check for previous pos
+                previousPlayerBottom <= platformBounds.top + (velocity.y > 0 ? velocity.y : 5.0f) &&
                 (playerHitbox.top + playerHitbox.height) >= platformBounds.top) {
-                if ((playerHitbox.left + playerHitbox.width > platformBounds.left + 1.0f) && // Small tolerance
+                if ((playerHitbox.left + playerHitbox.width > platformBounds.left + 1.0f) &&
                     (playerHitbox.left < platformBounds.left + platformBounds.width - 1.0f)) {
+
                     float hitboxBottomFromOriginY = (customHitbox_local.top + customHitbox_local.height) - (static_cast<float>(frameHeight) / 2.f);
                     float targetY = platformBounds.top - hitboxBottomFromOriginY * this->currentScaleY;
                     setPosition(getPosition().x, targetY);
@@ -248,11 +271,12 @@ void Player::updater(const std::vector<Platform>& platforms) {
                         setAnimation("idle", 6, 0.1f);
                     }
                     break;
-                    }
                 }
+            }
         }
     }
 
+    // determine current animation state
     if (onGround && !isJumping && !isShooting) {
         if (velocity.x != 0 && currentAnimationName != "run") {
             setAnimation("run", 10, 0.05f);
@@ -262,15 +286,21 @@ void Player::updater(const std::vector<Platform>& platforms) {
     }
 }
 
-bool Player::wantsToShootProjectile() const { return wantsToShootFlag; }
+// check if player wants to shoot this frame
+bool Player::wantsToShootProjectile() const {
+    return wantsToShootFlag;
+}
 
 ProjectileSpawnInfo Player::getProjectileSpawnDetails() {
+    // calculate spawn position from hitbox and direction
     sf::Vector2f spawnPos = getPosition();
     float horizontalOffset = (customHitbox_local.width / 2.f + 10.f) * currentScaleX;
     spawnPos.x += facingRight ? horizontalOffset : -horizontalOffset;
+
     float hitboxCenterY_local = customHitbox_local.top + customHitbox_local.height / 2.0f;
     float spriteOriginY_local = static_cast<float>(frameHeight) / 2.0f;
     spawnPos.y += (hitboxCenterY_local - spriteOriginY_local) * currentScaleY;
+
     sf::Vector2f direction = facingRight ? sf::Vector2f(1.f, 0.f) : sf::Vector2f(-1.f, 0.f);
     wantsToShootFlag = false;
     return {spawnPos, direction, projectileMoveSpeed};
@@ -278,9 +308,12 @@ ProjectileSpawnInfo Player::getProjectileSpawnDetails() {
 
 void Player::takeDamage() {
     if (healthPoints <= 0) return;
+
+    // decrement health and notify
     healthPoints--;
     notifyObservers(GameEvent::PLAYER_TOOK_DAMAGE);
     std::cout << "Player took damage. HP: " << healthPoints << std::endl;
+
     if (healthPoints <= 0) {
         setAnimation("death", 5, 0.25f);
         velocity = {0, 0};

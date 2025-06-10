@@ -20,6 +20,24 @@ enum class GameState {
     GAME_OVER
 };
 
+// helper for fading text alpha
+template<typename T>
+sf::Uint8 calculateAlpha(T currentTime, T totalDuration, T fadeInTime, T holdTime, T fadeOutTime) {
+    T alphaPercent = 0.f;
+    if (currentTime < fadeInTime) { // fading in
+        alphaPercent = currentTime / fadeInTime;
+    } else if (currentTime < fadeInTime + holdTime) { // holding
+        alphaPercent = 1.0f;
+    } else if (currentTime < totalDuration) { // fading out
+        T fadeOutProgress = (currentTime - (fadeInTime + holdTime)) / fadeOutTime;
+        alphaPercent = 1.0f - fadeOutProgress;
+    } else { // fully faded out or duration passed
+        alphaPercent = 0.0f;
+    }
+    alphaPercent = std::max(0.0f, std::min(1.0f, alphaPercent)); // clamp 0-1
+    return static_cast<sf::Uint8>(alphaPercent * 255);
+}
+
 int main() {
     std::cout << "Game Starting...\n";
     SoundManager soundManager;
@@ -29,11 +47,16 @@ int main() {
         constexpr unsigned int windowWidth = 1600, windowHeight = 900;
         window.create(sf::VideoMode({windowWidth, windowHeight}), "ToonLander", sf::Style::Default);
         window.setFramerateLimit(90);
+        sf::Image icon;
+        if (!icon.loadFromFile("./assets/game_icon.png")) {
+            throw ResourceLoadError("Icon", "assets/game_icon.png", "not properly loaded");
+        }
+        window.setIcon(icon.getSize().x, icon.getSize().y, icon.getPixelsPtr());
 
-        GameState currentState = GameState::MENU;
-        sf::Clock deltaClock;
+        GameState currentState = GameState::INTRO_SPLASH;
+        sf::Clock deltaClock; // initiate delta-clock
         sf::Clock introScreenTimer; // timer for intro splash
-        bool introMusicStarted = false;
+        bool gameStartedEventPosted = false; // flag for event management
 
         Menu gameMenu(&window);
         gameMenu.addObserver(&soundManager);
@@ -55,11 +78,11 @@ int main() {
         introTextLine2.setOrigin(bounds2.left + bounds2.width / 2.f, bounds2.top + bounds2.height / 2.f);
         introTextLine2.setPosition(static_cast<float>(windowWidth) / 2.f, static_cast<float>(windowHeight) / 2.f + 40.f);
 
-        const float introDuration = 5.f;
-        const float fadeInDuration = 1.5f;
-        const float holdDuration = 2.f;
-        const float fadeOutStartTime = fadeInDuration + holdDuration;
-        const float fadeOutDuration = introDuration - fadeOutStartTime;
+        constexpr float introDuration = 5.f;
+        constexpr float fadeInDuration = 1.5f;
+        constexpr float holdDuration = 2.f;
+        constexpr float fadeOutStartTime = fadeInDuration + holdDuration;
+        constexpr float fadeOutDuration = introDuration - fadeOutStartTime;
 
         sf::Font pauseFont;
         if (!pauseFont.loadFromFile("assets/ARCADECLASSIC.TTF")) {
@@ -85,6 +108,14 @@ int main() {
                 // event handling per state
                 switch (currentState) {
                     case GameState::INTRO_SPLASH:
+                        if (event.type == sf::Event::KeyPressed &&
+   (event.key.code == sf::Keyboard::Enter || event.key.code == sf::Keyboard::Space || event.key.code == sf::Keyboard::Escape) ) {
+                            // skip intro logic: directly transition
+                            soundManager.stopIntroTheme(); // stop intro if playing
+                            currentState = GameState::MENU;
+                            soundManager.onNotify(GameEvent::MENU_ENTERED); // tell soundmanager menu has started
+                            std::cout << "intro skipped, transitioning to menu state\n";
+   }
                         break;
                     case GameState::MENU:
                         gameMenu.handleInput(event);
@@ -121,16 +152,37 @@ int main() {
             }
 
             switch (currentState) { // update logic per state
+                case GameState::INTRO_SPLASH:
+                {
+                    if (!gameStartedEventPosted) {
+                        soundManager.onNotify(GameEvent::GAME_STARTED); // Trigger intro sound
+                        gameStartedEventPosted = true;
+                        introScreenTimer.restart();
+                    }
+
+                    float introTimeElapsed = introScreenTimer.getElapsedTime().asSeconds();
+                    sf::Uint8 alpha = calculateAlpha(introTimeElapsed, introDuration, fadeInDuration, holdDuration, fadeOutDuration);
+
+                    introTextLine1.setFillColor(sf::Color(255, 255, 255, alpha));
+                    introTextLine2.setFillColor(sf::Color(255, 255, 255, alpha));
+
+                    if (introTimeElapsed >= introDuration) {
+                        soundManager.stopIntroTheme(); // Ensure intro theme is stopped
+                        currentState = GameState::MENU;
+                        soundManager.onNotify(GameEvent::MENU_ENTERED); // Trigger menu music
+                        std::cout << "intro finished, transitioning to menu state\n";
+                    }
+                }
+                break;
                 case GameState::MENU:
                     gameMenu.update(dt);
                     if (gameMenu.isStartRequested()) {
                         if (!entityFactory) {
                              entityFactory = std::make_unique<ConcreteEntityFactory>();
                         }
-                        gameWorld = std::make_unique<World>(&window, std::move(entityFactory));
-
+                        gameWorld = std::make_unique<World>(&window, std::move(entityFactory), &soundManager);
+                        soundManager.onNotify(GameEvent::GAMEPLAY_STARTED);
                         currentState = GameState::PLAYING;
-                        std::cout << "Transitioning to PLAYING state\n";
                     }
                     break;
                 case GameState::PLAYING:
@@ -146,13 +198,16 @@ int main() {
                     }
                     break;
                 case GameState::PAUSED:
-                    break;
                 case GameState::GAME_OVER:
                     break;
             }
 
             window.clear();
             switch (currentState) {
+                case GameState::INTRO_SPLASH:
+                    window.draw(introTextLine1);
+                    window.draw(introTextLine2);
+                    break;
                 case GameState::MENU:
                     gameMenu.draw();
                     break;
@@ -166,6 +221,19 @@ int main() {
                     break;
                 case GameState::GAME_OVER:
                     if (gameWorld) gameWorld->draw();
+                    sf::Text gameOverText("game over", introFont, 80);
+                    sf::FloatRect goBounds = gameOverText.getLocalBounds();
+                    gameOverText.setOrigin(goBounds.left + goBounds.width / 2.f, goBounds.top + goBounds.height / 2.f);
+                    gameOverText.setPosition(windowWidth / 2.f, windowHeight / 2.f - 60.f);
+                    gameOverText.setFillColor(sf::Color::Red);
+                    window.draw(gameOverText);
+
+                    sf::Text restartText("press enter to return to menu", introFont, 40);
+                    sf::FloatRect rsBounds = restartText.getLocalBounds();
+                    restartText.setOrigin(rsBounds.left + rsBounds.width / 2.f, rsBounds.top + rsBounds.height / 2.f);
+                    restartText.setPosition(windowWidth / 2.f, windowHeight / 2.f + 40.f);
+                    restartText.setFillColor(sf::Color::White);
+                    window.draw(restartText);
                     break;
             }
             window.display();

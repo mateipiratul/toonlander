@@ -1,4 +1,5 @@
 #include "../class_headers/ConcreteEntityFactory.h"
+// specific factory methods
 
 std::unique_ptr<Entity> ConcreteEntityFactory::makeBerserkOrc(sf::RenderWindow* win, const sf::Vector2f& pos) {
     return std::make_unique<BerserkOrc>(win, pos);

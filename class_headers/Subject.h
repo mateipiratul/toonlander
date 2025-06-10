@@ -5,6 +5,7 @@
 #include "Observer.h"
 #include "GameEvents.h"
 
+// subject class for observer
 class Subject {
     std::vector<Observer*> observers;
 

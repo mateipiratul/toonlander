@@ -4,7 +4,7 @@
 #include <SFML/Graphics.hpp>
 
 class Platform {
-    sf::RectangleShape shape;
+    sf::RectangleShape shape; // rectangular shape
 
 public:
     Platform(float x, float y, float width, float height);

@@ -6,7 +6,8 @@ enum class GameEvent {
   PLAYER_TOOK_DAMAGE,    // hurt sound
   BUTTON_CLICKED,        // button click
   GAME_STARTED,          // intro sound
-  MENU_ENTERED           // menu song
+  MENU_ENTERED,          // menu music
+  GAMEPLAY_STARTED       // stop menu music
 };
 
 #endif //GAMEEVENTS_H
