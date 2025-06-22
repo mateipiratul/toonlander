@@ -94,7 +94,7 @@ void Menu::handleInput(const sf::Event& event) {
 
     if (event.type == sf::Event::MouseButtonPressed) {
         if (event.mouseButton.button == sf::Mouse::Left) {
-            if (isHovering) {
+            if (isHovering) { // if button is clicked
                 startRequested = true;
                 std::cout << "Start button clicked!" << std::endl;
                 notifyObservers(GameEvent::BUTTON_CLICKED);
@@ -121,7 +121,7 @@ void Menu::update(float dt) {
         bgSpr2.setPosition(bgSpr1.getPosition().x + spriteWidth - (scrollSpeed * dt), 0.f);
     }
 
-    if (isHovering) {
+    if (isHovering) { // visual effects of button
         buttonBox.setFillColor(sf::Color(200, 200, 200)); // lighter gray for hover
         startButtonText.setFillColor(sf::Color(50, 50, 50)); // darker text on hover
     } else {

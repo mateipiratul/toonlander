@@ -110,7 +110,7 @@ void World::createInitialEntitiesAndPlayer() {
     entities.push_back(std::move(mageEntity));
 }
 
-void World::handleInput() {
+void World::handleInput() const {
     if (playerPtr && playerPtr->getHealthPoints() > 0) {
         playerPtr->actions();
     } // handle user input (actions of Player)
@@ -176,7 +176,7 @@ void World::spawnEnemyProjectiles() {
         }
     }
     if (!newProjectiles.empty()) {
-        std::move(newProjectiles.begin(), newProjectiles.end(), std::back_inserter(entities));
+        std::ranges::move(newProjectiles, std::back_inserter(entities));
     }
 }
 
@@ -234,18 +234,25 @@ void World::checkCollisions() {
     }
 }
 
+void World::setupHealthDisplay() {
+    
+}
+
+void World::updateHealthDisplay() {
+
+}
+
 void World::removeMarkedEntities() {
     entities.erase(
-        std::remove_if(entities.begin(), entities.end(),
-            [](const std::unique_ptr<Entity>& entity) {
-                if (!entity) return true;
-                // Using auto for dynamic_cast results here too
-                if (auto* p = dynamic_cast<Projectile*>(entity.get())) return p->isMarkedForRemoval();
-                if (auto* mp = dynamic_cast<MagicProjectile*>(entity.get())) return mp->isMarkedForRemoval();
-                if (auto* bo = dynamic_cast<BerserkOrc*>(entity.get())) return bo->isMarkedForRemoval();
-                if (auto* mo = dynamic_cast<MageOrc*>(entity.get())) return mo->isMarkedForRemoval();
-                return false;
-            }),
+        std::ranges::remove_if(entities,
+               [](const std::unique_ptr<Entity>& entity) {
+                   if (!entity) return true;
+                   if (auto* p = dynamic_cast<Projectile*>(entity.get())) return p->isMarkedForRemoval();
+                   if (auto* mp = dynamic_cast<MagicProjectile*>(entity.get())) return mp->isMarkedForRemoval();
+                   if (auto* bo = dynamic_cast<BerserkOrc*>(entity.get())) return bo->isMarkedForRemoval();
+                   if (auto* mo = dynamic_cast<MageOrc*>(entity.get())) return mo->isMarkedForRemoval();
+                   return false;
+               }).begin(),
         entities.end()
     );
 

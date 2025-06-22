@@ -27,6 +27,14 @@ class World {
     sf::Texture backgroundTexture;
     sf::Sprite backgroundSprite;
 
+    sf::Texture heartTexture;
+    sf::Sprite heartSprite;
+    sf::Font hudFont;
+    sf::Text healthText;
+    sf::Text healthDisplayText;
+
+    void setupHealthDisplay();
+    void updateHealthDisplay();
     void loadResources(); // load textures and assets
     void createInitialEntitiesAndPlayer(); // player and enemies setup
     void checkCollisions(); // handle all collisions
@@ -36,7 +44,7 @@ class World {
 
 public:
     explicit World(sf::RenderWindow* win, std::unique_ptr<EntityFactory> factory, SoundManager* soundManagerPtr);
-    void handleInput(); // handle player input
+    void handleInput() const; // handle player input
     void update(float dt); // call all update functions
     void draw(); // call all draw functions
 
